@@ -180,7 +180,7 @@ export default function StudentDashboard() {
           </div>
 
           <button className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-4 h-4" /> {/* Logout button at the top right */}
             <span>Logout</span>
           </button>
         </div>
@@ -212,10 +212,10 @@ export default function StudentDashboard() {
             </nav>
           </div>
           <div className="p-6">
-            <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition duration-200">
-              <LogOut className="w-6 h-6" /> {/* Logout icon */}
-              <span>Logout</span>
-            </button>
+            {/* <button className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-50 text-red-600 font-semibold rounded-lg hover:bg-red-100 transition duration-200">
+              <LogOut className="w-6 h-6" /> {/* Logout icon at bottom */}
+              {/* <span>Logout</span>
+            </button> */}
           </div>
         </aside>
 
