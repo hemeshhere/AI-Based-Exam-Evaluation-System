@@ -1,0 +1,6 @@
+# Node.js (for MERN stack, React, etc.)
+node_modules/
+.env
+dist/
+build/
+npm-debug.log
