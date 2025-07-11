@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import studentImage from '../assets/student.jpg';
 import teacherImage from '../assets/teacher.jpg';
