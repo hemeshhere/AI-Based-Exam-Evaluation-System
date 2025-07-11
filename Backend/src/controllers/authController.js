@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 require('../models/teacherModel');
-require('../models/studentModel');
+require('../models/student.models');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -17,7 +17,7 @@ exports.register = async (req, res) => {
     if (existing) return res.status(400).json({ message: 'User already exists' });
 
     const Model = role === 'teacher' ? require('../models/teacherModel')
-               : role === 'student' ? require('../models/studentModel')
+               : role === 'student' ? require('../models/student.models')
                : User;
 
     const user = await Model.create({ firstName, secondName, email, password });
