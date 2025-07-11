@@ -1,10 +1,8 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import studentImage from '../assets/student.jpg';
 import teacherImage from '../assets/teacher.jpg';
 import { useNavigate } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 export default function Login({ setUser }) {
 	const [role, setRole] = useState('student');
