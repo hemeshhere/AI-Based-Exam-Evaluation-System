@@ -116,31 +116,6 @@ const uploadImage = async (filePath, options = {}) => {
   return uploadToCloudinary(filePath, imageOptions);
 };
 
-// Upload video with specific settings
-const uploadVideo = async (filePath, options = {}) => {
-  const videoOptions = {
-    resource_type: 'video',
-    folder: options.folder || 'uploads/videos',
-    quality: 'auto:good',
-    maxSize: 100 * 1024 * 1024, // 100MB for videos
-    ...options
-  };
-
-  return uploadToCloudinary(filePath, videoOptions);
-};
-
-// Upload document/file
-const uploadDocument = async (filePath, options = {}) => {
-  const documentOptions = {
-    resource_type: 'raw',
-    folder: options.folder || 'uploads/documents',
-    maxSize: 20 * 1024 * 1024, // 20MB for documents
-    ...options
-  };
-
-  return uploadToCloudinary(filePath, documentOptions);
-};
-
 // Upload profile picture with specific transformations
 const uploadProfilePicture = async (filePath, options = {}) => {
   const profileOptions = {
@@ -183,39 +158,6 @@ const deleteImage = async (publicId) => {
   return deleteFromCloudinary(publicId, 'image');
 };
 
-// Delete video
-const deleteVideo = async (publicId) => {
-  return deleteFromCloudinary(publicId, 'video');
-};
-
-// Delete document
-const deleteDocument = async (publicId) => {
-  return deleteFromCloudinary(publicId, 'raw');
-};
-
-// Bulk delete function
-const bulkDelete = async (publicIds, resourceType = 'image') => {
-  if (!Array.isArray(publicIds) || publicIds.length === 0) {
-    throw new Error('Array of public IDs is required for bulk deletion');
-  }
-
-  try {
-    const result = await cloudinary.api.delete_resources(publicIds, {
-      resource_type: resourceType,
-      invalidate: true
-    });
-
-    return {
-      success: true,
-      deleted: result.deleted,
-      deleted_counts: result.deleted_counts,
-      partial: result.partial
-    };
-  } catch (error) {
-    throw new Error(`Cloudinary bulk delete failed: ${error.message}`);
-  }
-};
-
 // Health check function
 const healthCheck = async () => {
   try {
@@ -228,15 +170,7 @@ const healthCheck = async () => {
 
 export {
   uploadImage,
-  uploadVideo,
-  uploadDocument,
   uploadProfilePicture,
-
-  // Delete functions
   deleteImage,
-  deleteVideo,
-  deleteDocument,
-  bulkDelete,
-
-  healthCheck,
+  healthCheck
 };
