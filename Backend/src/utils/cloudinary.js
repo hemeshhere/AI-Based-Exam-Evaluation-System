@@ -1,60 +1,242 @@
-import {v2 as cloudinary} from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
 
+// Initialize Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true, // Force HTTPS URLs
 });
 
-const uploadImage = async (filePath) => {
+// Validate Cloudinary configuration
+const validateConfig = () => {
+  const { cloud_name, api_key, api_secret } = cloudinary.config();
+  if (!cloud_name || !api_key || !api_secret) {
+    throw new Error('Cloudinary configuration is incomplete. Please check your environment variables.');
+  }
+};
+
+// Initialize validation
+validateConfig();
+
+// Helper function to clean up local files
+const cleanupLocalFile = (filePath) => {
   try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'uploads',
-      resource_type: 'image'
-    });
-    return result;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
   } catch (error) {
+    console.warn(`Failed to cleanup local file: ${filePath}`, error.message);
+  }
+};
+
+// Helper function to get file size
+const getFileSize = (filePath) => {
+  try {
+    const stats = fs.statSync(filePath);
+    return stats.size;
+  } catch (error) {
+    return 0;
+  }
+};
+
+// Generic upload function with comprehensive options
+const uploadToCloudinary = async (filePath, options = {}) => {
+  if (!filePath) {
+    throw new Error('File path is required');
+  }
+
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`File not found: ${filePath}`);
+  }
+
+  const fileSize = getFileSize(filePath);
+  const maxSize = options.maxSize || 10 * 1024 * 1024; // 10MB default
+
+  if (fileSize > maxSize) {
+    throw new Error(`File size (${Math.round(fileSize / 1024 / 1024)}MB) exceeds maximum allowed size (${Math.round(maxSize / 1024 / 1024)}MB)`);
+  }
+
+  const defaultOptions = {
+    folder: 'uploads',
+    use_filename: true,
+    unique_filename: true,
+    overwrite: false,
+    quality: 'auto:good',
+    fetch_format: 'auto',
+    ...options
+  };
+
+  try {
+    const result = await cloudinary.uploader.upload(filePath, defaultOptions);
+    
+    // Cleanup local file after successful upload
+    if (options.cleanup !== false) {
+      cleanupLocalFile(filePath);
+    }
+
+    return {
+      success: true,
+      data: {
+        public_id: result.public_id,
+        secure_url: result.secure_url,
+        url: result.url,
+        format: result.format,
+        resource_type: result.resource_type,
+        bytes: result.bytes,
+        width: result.width,
+        height: result.height,
+        created_at: result.created_at,
+      }
+    };
+  } catch (error) {
+    // Cleanup local file even on failure
+    if (options.cleanup !== false) {
+      cleanupLocalFile(filePath);
+    }
     throw new Error(`Cloudinary upload failed: ${error.message}`);
   }
-}
+};
 
-const deleteImage = async (publicId) => {
+// Upload image with optimizations
+const uploadImage = async (filePath, options = {}) => {
+  const imageOptions = {
+    resource_type: 'image',
+    folder: options.folder || 'uploads/images',
+    transformation: [
+      { quality: 'auto:good' },
+      { fetch_format: 'auto' },
+      ...(options.transformations || [])
+    ],
+    maxSize: 5 * 1024 * 1024, // 5MB for images
+    ...options
+  };
+
+  return uploadToCloudinary(filePath, imageOptions);
+};
+
+// Upload video with specific settings
+const uploadVideo = async (filePath, options = {}) => {
+  const videoOptions = {
+    resource_type: 'video',
+    folder: options.folder || 'uploads/videos',
+    quality: 'auto:good',
+    maxSize: 100 * 1024 * 1024, // 100MB for videos
+    ...options
+  };
+
+  return uploadToCloudinary(filePath, videoOptions);
+};
+
+// Upload document/file
+const uploadDocument = async (filePath, options = {}) => {
+  const documentOptions = {
+    resource_type: 'raw',
+    folder: options.folder || 'uploads/documents',
+    maxSize: 20 * 1024 * 1024, // 20MB for documents
+    ...options
+  };
+
+  return uploadToCloudinary(filePath, documentOptions);
+};
+
+// Upload profile picture with specific transformations
+const uploadProfilePicture = async (filePath, options = {}) => {
+  const profileOptions = {
+    folder: 'uploads/profiles',
+    transformation: [
+      { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+      { quality: 'auto:good' },
+      { fetch_format: 'auto' }
+    ],
+    ...options
+  };
+
+  return uploadImage(filePath, profileOptions);
+};
+
+// Generic delete function
+const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
+  if (!publicId) {
+    throw new Error('Public ID is required for deletion');
+  }
+
   try {
     const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: 'image'
+      resource_type: resourceType,
+      invalidate: true // Invalidate CDN cache
     });
-    return result;
+
+    return {
+      success: result.result === 'ok',
+      result: result.result,
+      public_id: publicId
+    };
   } catch (error) {
     throw new Error(`Cloudinary delete failed: ${error.message}`);
   }
-}
+};
 
-const uploadVideo = async (filePath) => {
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'uploads',
-      resource_type: 'video'
-    });
-    return result;
-  } catch (error) {
-    throw new Error(`Cloudinary video upload failed: ${error.message}`);
-  }
-}
+// Delete image
+const deleteImage = async (publicId) => {
+  return deleteFromCloudinary(publicId, 'image');
+};
 
+// Delete video
 const deleteVideo = async (publicId) => {
-  try {
-    const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: 'video'
-    });
-    return result;
-  } catch (error) {
-    throw new Error(`Cloudinary video delete failed: ${error.message}`);
+  return deleteFromCloudinary(publicId, 'video');
+};
+
+// Delete document
+const deleteDocument = async (publicId) => {
+  return deleteFromCloudinary(publicId, 'raw');
+};
+
+// Bulk delete function
+const bulkDelete = async (publicIds, resourceType = 'image') => {
+  if (!Array.isArray(publicIds) || publicIds.length === 0) {
+    throw new Error('Array of public IDs is required for bulk deletion');
   }
-}
+
+  try {
+    const result = await cloudinary.api.delete_resources(publicIds, {
+      resource_type: resourceType,
+      invalidate: true
+    });
+
+    return {
+      success: true,
+      deleted: result.deleted,
+      deleted_counts: result.deleted_counts,
+      partial: result.partial
+    };
+  } catch (error) {
+    throw new Error(`Cloudinary bulk delete failed: ${error.message}`);
+  }
+};
+
+// Health check function
+const healthCheck = async () => {
+  try {
+    await cloudinary.api.ping();
+    return { status: 'healthy', timestamp: new Date().toISOString() };
+  } catch (error) {
+    return { status: 'unhealthy', error: error.message, timestamp: new Date().toISOString() };
+  }
+};
 
 export {
   uploadImage,
-  deleteImage,
   uploadVideo,
-  deleteVideo
+  uploadDocument,
+  uploadProfilePicture,
+
+  // Delete functions
+  deleteImage,
+  deleteVideo,
+  deleteDocument,
+  bulkDelete,
+
+  healthCheck,
 };
