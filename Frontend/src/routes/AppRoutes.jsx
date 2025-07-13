@@ -9,16 +9,7 @@ export default function AppRoutes() {
 
 	return (
 		<Routes>
-			{/* <Route 
-				path="/" 
-				element={
-					user ? 
-						user.role === 'teacher' ? 
-							<Navigate to="/teacher-dashboard" replace /> : 
-							<Navigate to="/student-dashboard" replace />
-						: <Navigate to="/login" replace />
-				} 
-			/> */}
+			{/* Login Route */}
 			<Route 
 				path="/login" 
 				element={
@@ -29,19 +20,29 @@ export default function AppRoutes() {
 						: <Login setUser={setUser} />
 				} 
 			/>
+
+			{/* Teacher Dashboard - Protected */}
 			<Route 
 				path="/teacher-dashboard" 
 				element={
-						<TeacherDashboard user={user} setUser={setUser} />
+					user?.role === 'teacher' ? 
+						<TeacherDashboard user={user} setUser={setUser} /> 
+						: <Navigate to="/login" replace />
 				} 
 			/>
+
+			{/* Student Dashboard - Protected */}
 			<Route 
 				path="/student-dashboard" 
 				element={
+					user?.role === 'student' ? 
 						<StudentDashboard user={user} setUser={setUser} /> 
+						: <Navigate to="/login" replace />
 				} 
 			/>
-			{/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
+
+			{/* Catch-all route */}
+			<Route path="*" element={<Navigate to="/login" replace />} />
 		</Routes>
 	);
 }

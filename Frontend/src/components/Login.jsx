@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import studentImage from '../assets/student.jpg';
 import teacherImage from '../assets/teacher.jpg';
 import { useNavigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function Login({ setUser }) {
 	const [role, setRole] = useState('student');

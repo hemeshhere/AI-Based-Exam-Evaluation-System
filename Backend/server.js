@@ -3,15 +3,15 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 // Import and use exam-related routes under /api/exam
-const examRoutes = require('./routes/examRoutes');
+const examRoutes = require('./src/routes/examRoutes');
 app.use('/api/exam', examRoutes);
 
 // Import and use question-related routes under /api/question
-const questionRoutes = require('./routes/questionRoutes');
+const questionRoutes = require('./src/routes/questionRoutes');
 app.use('/api/question', questionRoutes);
 
 //auth routes
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
   
 

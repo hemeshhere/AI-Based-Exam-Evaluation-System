@@ -1,5 +1,5 @@
 // Import the Exam model for database operations
-const Exam = require('../models/examModel');
+const Exam = require('../models/exam.model.js');
 
 exports.createExam = async (req, res) => {
   try {
