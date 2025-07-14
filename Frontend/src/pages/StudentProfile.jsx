@@ -32,7 +32,7 @@ export default function StudentProfile({ user }) {
 						</div>
 						<div>
 							<strong className="text-gray-500">Email:</strong>
-							<p className="text-lg">john.doe@example.com</p>
+							<p className="text-lg">{user?.email || 'john.doe@example.com'}</p>
 						</div>
 					</div>
 				</div>
