@@ -100,3 +100,99 @@ const logoutStudent = asyncHandler(async (req, res) => {
             new ApiResponse('Logout successful')
         );
 });
+
+// Get current user profile
+const getCurrentUserProfile = asyncHandler(async (req, res) => {
+    const studentId = req.user.id;
+
+    const student = await Student.findById(studentId).select('-password');
+    if (!student) {
+        throw new ApiError(404, 'Student not found');
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse('User profile retrieved successfully', { student })
+        );
+});
+
+// Update user profile
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const studentId = req.user.id;
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+        throw new ApiError(400, 'Name and email are required');
+    }
+
+    const student = await Student.findByIdAndUpdate(
+        studentId,
+        { name, email },
+        { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!student) {
+        throw new ApiError(404, 'Student not found');
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse('User profile updated successfully', { student })
+        );
+});
+
+// Get user by ID
+const getUserById = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const student = await Student.findById(id).select('-password');
+    if (!student) {
+        throw new ApiError(404, 'Student not found');
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse('User retrieved successfully', { student })
+        );
+});
+
+// Get all students
+const getAllStudents = asyncHandler(async (req, res) => {
+    const students = await Student.find().select('-password');
+    return res
+        .status(200)
+        .json(
+            new ApiResponse('All students retrieved successfully', { students })
+        );
+});
+
+// Delete student
+const deleteStudent = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const student = await Student.findByIdAndDelete(id);
+    if (!student) {
+        throw new ApiError(404, 'Student not found');
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse('Student deleted successfully')
+        );
+});
+
+export {
+    generateTokens,
+    registerStudent,
+    loginStudent,
+    logoutStudent,
+    getCurrentUserProfile,
+    updateUserProfile,
+    getUserById,
+    getAllStudents,
+    deleteStudent
+};
