@@ -206,3 +206,4 @@ const StudentTimetable = () => {
 };
 
 export default StudentTimetable;
+
