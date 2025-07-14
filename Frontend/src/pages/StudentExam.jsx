@@ -298,29 +298,6 @@ const StudentExamPage = () => {
         );
     }
 
-    // This block is now removed as error message is integrated into the list view
-    /*
-    if (error && viewMode === 'list') {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-                <div className="text-center text-red-600 bg-white p-6 rounded-lg shadow-md">
-                    <p className="text-xl font-semibold mb-4">Error Loading Exams</p>
-                    <p>{error}</p>
-                    <button
-                        onClick={() => {
-                            setError(null);
-                            setLoading(true);
-                        }}
-                        className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
-                    >
-                        Retry Loading Exams
-                    </button>
-                </div>
-            </div>
-        );
-    }
-    */
-
     if (viewMode === 'list') {
         return (
             <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 md:p-8 bg-gray-100">
@@ -485,25 +462,26 @@ const StudentExamPage = () => {
                     >
                         Previous
                     </button>
-                    <button
-                        onClick={handleNextQuestion}
-                        disabled={isLastQuestion}
-                        className={`py-2 px-6 rounded-md transition duration-200 ease-in-out font-semibold ${
-                            isLastQuestion ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600 shadow-md'
-                        }`}
-                    >
-                        Next
-                    </button>
+                    {/* Conditional rendering for Next or End Exam button */}
+                    {isLastQuestion ? (
+                        <button
+                            onClick={() => handleSubmitExam(false)} // Explicitly not auto-submit
+                            className="py-2 px-6 rounded-md transition duration-200 ease-in-out font-semibold bg-red-600 text-white hover:bg-red-700 shadow-md hover:shadow-lg"
+                            disabled={loading} // Use loading state for submission process
+                        >
+                            {loading ? 'Submitting Exam...' : 'End Exam'}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleNextQuestion}
+                            className="py-2 px-6 rounded-md transition duration-200 ease-in-out font-semibold bg-blue-500 text-white hover:bg-blue-600 shadow-md"
+                        >
+                            Next
+                        </button>
+                    )}
                 </div>
 
-                {/* End Exam Button */}
-                <button
-                    onClick={() => handleSubmitExam(false)} // Explicitly not auto-submit
-                    className="w-full bg-red-600 text-white py-3 rounded-md hover:bg-red-700 transition duration-200 ease-in-out shadow-md hover:shadow-lg text-lg font-semibold"
-                    disabled={loading}
-                >
-                    {loading ? 'Submitting Exam...' : 'End Exam'}
-                </button>
+                {/* Removed the standalone End Exam button from here */}
             </div>
             {/* Message Box for user feedback - Rendered conditionally based on message state */}
             {message.text && (
