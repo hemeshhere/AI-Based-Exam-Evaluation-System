@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { createExam } from '../controllers/examController.js';
+import auth from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { createExam } = require('../controllers/examController');
-const auth = require('../middlewares/authMiddleware');
 
 router.post('/', auth, createExam);
 
-module.exports = router;
+export default router;

@@ -1,7 +1,6 @@
-// Import the Question model for database operations
-const Question = require('../models/questionModel');
+import Question from '../models/question.model.js';
 
-exports.addQuestion = async (req, res) => {
+export const addQuestion = async (req, res) => {
   try {
     const { questionType, questionText, options, correctAnswer, modelAnswer } = req.body;
     const { examId } = req.params;

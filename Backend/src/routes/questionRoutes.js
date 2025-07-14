@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { addQuestion } from '../controllers/questionController.js';
+import auth from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const { addQuestion } = require('../controllers/questionController');
-const auth = require('../middlewares/authMiddleware');
 
 router.post('/:examId/questions', auth, addQuestion);
 
-module.exports = router;
+export default router;

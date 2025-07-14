@@ -1,20 +1,19 @@
-// Import the Exam model for database operations
-const Exam = require('../models/exam.model.js');
+import { ApiResponse } from '../utils/ApiResponse.js';
+import { ApiError } from '../utils/ApiError.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import Exam from '../models/exam.model.js';
 
-exports.createExam = async (req, res) => {
-  try {
-    const { title, description, date } = req.body;
-
-    const exam = new Exam({
-      title,
-      description,
-      date,
-      createdBy: req.user._id
-    });
-
-    await exam.save();
-    res.status(201).json({ message: 'Exam created successfully', exam });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+export const createExam = asyncHandler(async (req, res) => {
+  const { title, description, date } = req.body;
+  if (!title || !description || !date) {
+    throw ApiError.BadRequest('All fields (title, description, date) are required');
   }
-};
+  const exam = new Exam({
+    title,
+    description,
+    date,
+    createdBy: req.user?._id
+  });
+  await exam.save();
+  new ApiResponse(res).success(exam, 'Exam created successfully');
+});
