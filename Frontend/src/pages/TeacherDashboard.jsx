@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../components/Footer';
 import {
   User,
   LogOut,
@@ -120,6 +121,7 @@ const TeacherDashboard = ({ user, setUser }) => {
         {/* Main Content */}
         <main className="flex-1 p-6">{renderContent()}</main>
       </div>
+        <Footer />
     </div>
   );
 };

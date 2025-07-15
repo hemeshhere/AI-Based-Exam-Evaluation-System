@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import Footer from '../components/Footer';
+
+
+
+
 import {
 	User,
 	LogOut,
@@ -60,8 +65,8 @@ export default function StudentDashboard({ user, setUser }) {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			{/* Header */}
+		<div className="min-h-screen bg-gray-50 flex flex-col">
+			{/* Header (desktop) */}
 			<div className="bg-white shadow-sm border-b border-gray-200 hidden md:block">
 				<div className="flex items-center justify-between px-6 py-4">
 					<div className="flex items-center space-x-3">
@@ -70,9 +75,9 @@ export default function StudentDashboard({ user, setUser }) {
 						</div>
 						<div>
 							<h1 className="text-lg font-semibold text-gray-800">
-								{user?.name || 'John Doe'}
+								{user?.name || 'John Doe'}
 							</h1>
-							<p className="text-sm text-gray-500">Student, Class 10th A</p>
+							<p className="text-sm text-gray-500">Student, Class 10th A</p>
 						</div>
 					</div>
 
@@ -86,9 +91,9 @@ export default function StudentDashboard({ user, setUser }) {
 				</div>
 			</div>
 
-			<div className="flex">
+			<div className="flex flex-1">
 				{/* Sidebar */}
-				<aside className="w-64 bg-white shadow-lg hidden md:flex flex-col justify-between min-h-screen">
+				<aside className="w-64 bg-white shadow-lg hidden md:flex flex-col justify-between">
 					<div className="p-6">
 						<h1 className="text-2xl font-bold text-blue-600 mb-8">
 							Student Portal
@@ -101,10 +106,9 @@ export default function StudentDashboard({ user, setUser }) {
 										key={item.id}
 										onClick={() => setActiveTab(item.id)}
 										className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-300
-											${
-												activeTab === item.id
-													? 'bg-blue-50 text-blue-600 font-semibold border border-blue-200'
-													: 'text-gray-700 font-medium hover:bg-blue-500 hover:text-white'
+                      ${activeTab === item.id
+												? 'bg-blue-50 text-blue-600 font-semibold border border-blue-200'
+												: 'text-gray-700 font-medium hover:bg-blue-500 hover:text-white'
 											}`}
 									>
 										<Icon className="w-6 h-6" />
@@ -118,6 +122,7 @@ export default function StudentDashboard({ user, setUser }) {
 
 				{/* Main Content */}
 				<div className="flex-1 flex flex-col">
+					{/* Mobile header */}
 					<header className="bg-white shadow-md p-4 flex justify-between items-center md:hidden sticky top-0 z-10">
 						<h1 className="text-xl font-bold text-blue-600">Student Portal</h1>
 						<button className="p-2 rounded-md hover:bg-gray-100">
@@ -133,14 +138,16 @@ export default function StudentDashboard({ user, setUser }) {
 									strokeLinejoin="round"
 									strokeWidth="2"
 									d="M4 6h16M4 12h16M4 18h16"
-								></path>
+								/>
 							</svg>
 						</button>
 					</header>
 
 					<main className="flex-1 p-4 md:p-8 space-y-12">{renderContent()}</main>
+
 				</div>
 			</div>
+				<Footer />
 		</div>
 	);
 }
