@@ -3,8 +3,8 @@ class ApiResponse {
         this.res = res;
     }
 
-    success(data, message = 'Success') {
-        this.res.status(200).json({
+    success(statusCode, data, message = 'Success') {
+        this.res.status(statusCode).json({
             status: 'success',
             message,
             data

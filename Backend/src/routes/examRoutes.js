@@ -1,6 +1,6 @@
 import express from 'express';
 import { createExam } from '../controllers/examController.js';
-import auth from '../middlewares/authMiddleware.js';
+import auth from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
 

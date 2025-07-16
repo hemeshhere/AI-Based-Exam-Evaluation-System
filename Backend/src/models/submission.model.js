@@ -40,9 +40,25 @@ const submissionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  evaluated: {
+  status: {
+    type: String,
+    enum: ['in_progress', 'submitted', 'evaluated', 'published'],
+    default: 'in_progress'
+  },
+  evaluatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Teacher'
+  },
+  evaluatedAt: {
+    type: Date
+  },
+  remarks: {
+    type: String,
+    trim: true
+  },
+  isPassed: {
     type: Boolean,
-    default: false
+    default: null
   }
 }, { timestamps: true });
 

@@ -4,16 +4,23 @@ import asyncHandler from '../utils/asyncHandler.js';
 import Exam from '../models/exam.model.js';
 
 export const createExam = asyncHandler(async (req, res) => {
-  const { title, description, date } = req.body;
-  if (!title || !description || !date) {
-    throw ApiError.BadRequest('All fields (title, description, date) are required');
+  const requiredFields = ['title', 'description', 'date', 'startTime', 'endTime', 'durationMinutes', 'year', 'semester', 'batch', 'section', 'department'];
+  const missingFields = requiredFields.filter(field => !req.body[field]);
+  
+  if (missingFields.length > 0) {
+    throw ApiError.BadRequest(`Missing required fields: ${missingFields.join(', ')}`);
   }
+
+  // Remove accessCode if it exists in the request
+  if (req.body.accessCode !== undefined) {
+    delete req.body.accessCode;
+  }
+
   const exam = new Exam({
-    title,
-    description,
-    date,
+    ...req.body,
     createdBy: req.user?._id
   });
+
   await exam.save();
   new ApiResponse(res).success(exam, 'Exam created successfully');
 });

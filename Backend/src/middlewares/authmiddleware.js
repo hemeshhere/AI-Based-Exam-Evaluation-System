@@ -8,17 +8,60 @@ const verifyAsync = promisify(jwt.verify);
 
 // Role constants
 export const ROLES = {
-  STUDENT: 'Student',
-  TEACHER: 'Teacher'
+  STUDENT: 'student',
+  TEACHER: 'teacher'
+};
+
+// Role-based authorization middleware
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    // Debug log
+    console.log('Authorization check - User:', {
+      userId: req.user?._id,
+      userRole: req.user?.role,
+      requiredRoles: roles,
+      headers: req.headers
+    });
+
+    if (!req.user) {
+      console.error('No user attached to request');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    // Normalize roles for case-insensitive comparison
+    const userRole = req.user.role?.toLowerCase();
+    const hasPermission = roles.some(role => 
+      role.toLowerCase() === userRole
+    );
+
+    if (!hasPermission) {
+      console.error(`Access denied. User role: ${userRole}, Required: ${roles.join(', ')}`);
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to perform this action',
+        debug: {
+          userRole,
+          requiredRoles: roles
+        }
+      });
+    }
+
+    console.log('Authorization granted for role:', userRole);
+    next();
+  };
 };
 
 // Middleware to verify JWT and attach user info
+// In authmiddleware.js, update the verifyToken function:
+
 export const verifyToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
     
     if (!authHeader) {
-      console.error('Authentication failed: No authorization header');
       return res.status(401).json({
         success: false,
         message: 'No authorization token provided'
@@ -27,90 +70,48 @@ export const verifyToken = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      console.error('Authentication failed: Malformed authorization header');
       return res.status(401).json({
         success: false,
         message: 'Invalid authorization header format'
       });
     }
 
-    let decoded;
     try {
-      decoded = await verifyAsync(token, process.env.JWT_SECRET);
-      console.log(`User ${decoded.id} authenticated (${decoded.role})`);
-    } catch (jwtError) {
-      console.error(`Token verification failed: ${jwtError.name} - ${jwtError.message}`);
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired token',
-        error: process.env.NODE_ENV === 'development' ? jwtError.message : undefined
-      });
-    }
-    
-    if (!decoded.role || !decoded.id) {
-      console.error('Invalid token payload:', decoded);
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token format'
-      });
-    }
-    
-    // Determine which model to use based on role
-    let user = null;
-    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Get user from database
+      let user = null;
       if (decoded.role === ROLES.STUDENT) {
-        console.log('Looking up student with ID:', decoded.id);
-        user = await Student.findById(decoded.id).select('-password');
+        user = await Student.findById(decoded.id);
       } else if (decoded.role === ROLES.TEACHER) {
-        console.log('Looking up teacher with ID:', decoded.id);
-        user = await Teacher.findById(decoded.id).select('-password');
-      } else {
-        console.error('Invalid role in token:', decoded.role);
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid user role in token'
-        });
+        user = await Teacher.findById(decoded.id);
       }
 
       if (!user) {
-        console.error('User not found with ID:', decoded.id);
         return res.status(401).json({
           success: false,
-          message: 'User not found or inactive'
+          message: 'User not found'
         });
       }
 
-      // Update last login time if the field exists
-      if (typeof user.lastLogin !== 'undefined') {
-        console.log('Updating last login for user:', user._id);
-        user.lastLogin = new Date();
-        await user.save({ validateBeforeSave: false });
-      }
+      // Attach user with role to request
+      req.user = {
+        ...user.toObject(),
+        role: decoded.role
+      };
 
-      // Attach user and role to request object
-      req.user = user;
-      req.role = decoded.role;
-      console.log('User authenticated successfully:', { 
-        id: user._id, 
-        email: user.email, 
-        role: decoded.role 
-      });
       next();
-    } catch (dbError) {
-      console.error('Database error during authentication:', dbError);
-      return res.status(500).json({
+    } catch (error) {
+      return res.status(401).json({
         success: false,
-        message: 'Error during user lookup',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        message: 'Invalid or expired token'
       });
     }
   } catch (error) {
-    console.error('Unexpected authentication error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: 'Internal server error during authentication',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: 'Internal server error'
     });
   }
 };

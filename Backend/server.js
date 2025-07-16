@@ -6,6 +6,8 @@ import mongoose from 'mongoose';
 import examRoutes from './src/routes/examRoutes.js';
 import questionRoutes from './src/routes/questionRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
+import studentRoutes from './src/routes/studentRoutes.js';
+import teacherRoutes from './src/routes/teacherRoutes.js';
 
 // Check for required environment variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
@@ -33,6 +35,8 @@ console.log(`- MONGO_URI: ${process.env.MONGO_URI ? '✅ Set' : '❌ Missing'}`)
 app.use('/api/v1/exam', examRoutes);
 app.use('/api/v1/question', questionRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/student', studentRoutes);
+app.use('/api/v1/teacher', teacherRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
