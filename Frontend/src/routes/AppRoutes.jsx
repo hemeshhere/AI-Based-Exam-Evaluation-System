@@ -5,6 +5,8 @@ import Login from '../components/Login.jsx';
 import RoleSelector from '../components/RoleSelector';
 import StudentLogin from '../components/StudentLogin.jsx';
 import TeacherLogin from '../components/TeacherLogin.jsx';
+import StudentDashboard from '../pages/StudentDashboard.jsx';
+import TeacherDashboard from '../pages/TeacherDashboard.jsx'; // ✅ Add these two
 
 export default function AppRoutes() {
   const [user, setUser] = useState(null);
@@ -29,7 +31,7 @@ export default function AppRoutes() {
               <Navigate to="/student-dashboard" replace />
             )
           ) : (
-            <Login setUser={setUser} />
+            <Login setUser={setUser} showModal={true} setShowModal={() => {}} />
           )
         }
       />
