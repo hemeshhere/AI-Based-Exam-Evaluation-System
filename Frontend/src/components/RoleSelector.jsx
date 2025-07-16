@@ -4,6 +4,7 @@ import { User, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Footer from './Footer';
 import TestimonialChat from './TestimonialChat';
+import Login from './Login'; // 👈 import the Login modal
 
 import img1 from '../assets/image1.jpg';
 import img2 from '../assets/image2.jpg';
@@ -16,24 +17,28 @@ import img8 from '../assets/image8.jpg';
 
 export default function RoleSelector() {
   const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const handleSelect = (role) => navigate('/login', { state: { role } });
-  const goToLogin = (signup = false) =>
-    navigate('/login', { state: { role: 'student', isSignup: signup } });
+  const handleSelect = (role) => {
+    if (role === 'student') {
+      navigate('/student-login');
+    } else {
+      navigate('/teacher-login');
+    }
+  };
 
   const imageSets = [
     [img1, img2, img3, img4, img5, img6, img7, img8],
     [img5, img6, img7, img8, img1, img2, img3, img4],
     [img3, img4, img1, img2, img7, img8, img5, img6],
   ];
-
   const [currentSet, setCurrentSet] = useState(0);
   const [lineIndex, setLineIndex] = useState(0);
 
   const heroLines = [
-    "Loved by millions of students and teachers.",
-    "Making learning fun and smarter.",
-    "Trusted by educators worldwide.",
+    'Loved by millions of students and teachers.',
+    'Making learning fun and smarter.',
+    'Trusted by educators worldwide.',
   ];
 
   useEffect(() => {
@@ -44,42 +49,46 @@ export default function RoleSelector() {
   }, []);
 
   useEffect(() => {
-    const lineTimer = setInterval(() => {
+    const timer = setInterval(() => {
       setLineIndex((prev) => (prev + 1) % heroLines.length);
     }, 3000);
-    return () => clearInterval(lineTimer);
+    return () => clearInterval(timer);
   }, []);
 
   const images = imageSets[currentSet];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* ☁️ Animated Cloud Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div
+          className="absolute w-[300%] h-full animate-cloudScroll opacity-40 bg-repeat-x"
+          style={{
+            backgroundImage: `url("https://www.svgbackgrounds.com/wp-content/uploads/2021/05/cloudy.svg")`,
+            backgroundSize: 'contain',
+          }}
+        />
+      </div>
+
       {/* ✅ Navbar */}
-      <nav className="w-full flex justify-between items-center px-6 py-4 shadow-sm border-b bg-white">
+      <nav className="relative z-10 w-full flex justify-between items-center px-6 py-4 shadow-sm border-b bg-white">
         <h1 className="text-2xl font-bold text-blue-600">AiEXAM</h1>
         <div className="flex gap-4">
           <button
-            onClick={() => goToLogin(false)}
+            onClick={() => setShowLoginModal(true)} // 👈 Open modal
             className="px-4 py-2 rounded-md font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
           >
             Sign In
           </button>
-          <button
-            onClick={() => goToLogin(true)}
-            className="px-4 py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
-          >
-            Sign Up
-          </button>
         </div>
       </nav>
 
-      {/* ✅ Hero */}
-      <div className="px-4 py-12 flex flex-col items-center">
+      {/* ✅ Hero Section */}
+      <div className="relative z-10 px-4 py-16 flex flex-col items-center bg-gradient-to-b from-sky-100 to-white">
         <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 leading-tight">
           Where classrooms <br /> become communities
         </h1>
 
-        {/* ✅ Animated Hero Lines */}
         <AnimatePresence mode="wait">
           <motion.p
             key={lineIndex}
@@ -97,9 +106,8 @@ export default function RoleSelector() {
           </motion.p>
         </AnimatePresence>
 
-        {/* Role Buttons */}
         <h2 className="mt-10 text-lg font-semibold text-gray-800">
-          Get started as a...
+          It time to start SignUp as...
         </h2>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -123,8 +131,8 @@ export default function RoleSelector() {
         </div>
       </div>
 
-      {/* ✅ Hanging Images */}
-      <div className="relative bg-white-50 py-16 overflow-hidden">
+      {/* 🖼️ Hanging Images */}
+      <div className="relative bg-sky-100 py-16 overflow-hidden z-10">
         <div className="relative z-10 flex justify-start flex-wrap gap-x-10 gap-y-12 px-6 max-w-6xl mx-auto">
           {images.map((img, index) => (
             <div key={index} className="flex flex-col items-center swing">
@@ -139,27 +147,43 @@ export default function RoleSelector() {
           ))}
         </div>
         <h2 className="mt-16 text-2xl md:text-3xl font-bold text-center text-slate-800">
-          Keeping teachers and student connected
+          Keeping teachers and students connected
         </h2>
       </div>
 
-      {/* 🌀 CSS Animations */}
-      <style>
-        {`
-          @keyframes swing {
-            0% { transform: rotate(1deg); }
-            50% { transform: rotate(-1.5deg); }
-            100% { transform: rotate(1deg); }
-          }
+      {/* ✨ Animations */}
+      <style>{`
+        @keyframes swing {
+          0% { transform: rotate(1deg); }
+          50% { transform: rotate(-1.5deg); }
+          100% { transform: rotate(1deg); }
+        }
 
-          .swing {
-            animation: swing 4s ease-in-out infinite;
-          }
-        `}
-      </style>
+        .swing {
+          animation: swing 4s ease-in-out infinite;
+        }
+
+        @keyframes cloudScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-66.66%); }
+        }
+
+        .animate-cloudScroll {
+          animation: cloudScroll 80s linear infinite;
+        }
+      `}</style>
 
       <TestimonialChat />
       <Footer />
+
+      {/* 👇 Sign In Modal */}
+      <Login
+        showModal={showLoginModal}
+        setShowModal={setShowLoginModal}
+        setUser={(user) => {
+          console.log('Logged in user:', user);
+        }}
+      />
     </div>
   );
 }
