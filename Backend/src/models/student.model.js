@@ -198,7 +198,7 @@ studentSchema.pre('save', async function (next) {
 });
 
 // Method to compare passwords
-studentSchema.methods.matchPassword = async function (enteredPassword) {
+studentSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

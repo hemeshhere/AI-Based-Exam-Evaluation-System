@@ -10,11 +10,11 @@ import { verifyToken } from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 // Public routes
-router.post('/api/v1/register/student', registerStudent);
-router.post('/api/v1/register/teacher', registerTeacher);
-router.post('/api/v1/login', login);
+router.post('/register/student', registerStudent);
+router.post('/register/teacher', registerTeacher);
+router.post('/login', login);
 
 // Protected routes
-router.get('/api/v1/me', verifyToken, getMe);
+router.get('/me', verifyToken, getMe);
 
 export default router;

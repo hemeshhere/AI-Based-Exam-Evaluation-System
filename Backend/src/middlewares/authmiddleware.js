@@ -15,11 +15,10 @@ export const ROLES = {
 // Middleware to verify JWT and attach user info
 export const verifyToken = async (req, res, next) => {
   try {
-    console.log('Authorization header:', req.headers['authorization']);
     const authHeader = req.headers['authorization'];
     
     if (!authHeader) {
-      console.error('No authorization header found');
+      console.error('Authentication failed: No authorization header');
       return res.status(401).json({
         success: false,
         message: 'No authorization token provided'
@@ -28,21 +27,19 @@ export const verifyToken = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      console.error('No token found in authorization header');
+      console.error('Authentication failed: Malformed authorization header');
       return res.status(401).json({
         success: false,
-        message: 'No token provided in authorization header'
+        message: 'Invalid authorization header format'
       });
     }
 
-    console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set');
-    
     let decoded;
     try {
       decoded = await verifyAsync(token, process.env.JWT_SECRET);
-      console.log('Decoded token:', JSON.stringify(decoded, null, 2));
+      console.log(`User ${decoded.id} authenticated (${decoded.role})`);
     } catch (jwtError) {
-      console.error('JWT verification failed:', jwtError.message);
+      console.error(`Token verification failed: ${jwtError.name} - ${jwtError.message}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid or expired token',
