@@ -85,7 +85,8 @@ export default function StudentLogin() {
       <AnimatePresence>
         {showModal && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  className="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center z-50"
+
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
