@@ -33,13 +33,12 @@ const generateToken = (user, role) => {
 
 // Student Registration
 export const registerStudent = asyncHandler(async (req, res) => {
-  console.log('Student registration request received:', JSON.stringify(req.body, null, 2));
   const { 
     email, 
     password, 
     firstName, 
     lastName, 
-    rollNumber,
+    rollNumber, 
     registrationID,
     phoneNumber,
     gender,
@@ -48,10 +47,11 @@ export const registerStudent = asyncHandler(async (req, res) => {
     year,
     section,
     semester,
-    address = {}
+    address
   } = req.body;
   
-  // Validate required fields
+  console.log(`New student registration attempt: ${email} (RegID: ${registrationID}, Roll: ${rollNumber})`);
+  
   const requiredFields = ['email', 'password', 'firstName', 'lastName', 'rollNumber', 'registrationID'];
   const missingFields = requiredFields.filter(field => !req.body[field]);
   
@@ -70,12 +70,15 @@ export const registerStudent = asyncHandler(async (req, res) => {
   
   if (existingStudent) {
     if (existingStudent.email === email.toLowerCase()) {
+      console.error(`Registration failed: Email ${email} already in use`);
       throw ApiError.BadRequest('Email already in use');
     }
     if (existingStudent.rollNumber === rollNumber.toUpperCase()) {
+      console.error(`Registration failed: Roll number ${rollNumber} already in use`);
       throw ApiError.BadRequest('Roll number already in use');
     }
     if (existingStudent.registrationID === registrationID) {
+      console.error(`Registration failed: Registration ID ${registrationID} already in use`);
       throw ApiError.BadRequest('Registration ID already in use');
     }
   }
@@ -193,27 +196,39 @@ export const registerTeacher = asyncHandler(async (req, res) => {
 
 // Login
 export const login = asyncHandler(async (req, res) => {
-  console.log('Login attempt:', { email: req.body.email, role: req.body.role });
-  const { email, password, role } = req.body;
+  const { email, password } = req.body;
+  
+  // Log only the email (no password)
+  console.log(`Login attempt for email: ${email}`);
 
   // Validate input
-  if (!email || !password || !role) {
-    throw ApiError.BadRequest('Email, password, and role are required');
+  if (!email || !password) {
+    console.error('Login failed: Missing credentials');
+    throw ApiError.BadRequest('Email and password are required');
   }
 
   let user = null;
+  let userRole = null;
   
-  // Find user based on role
+  // Find user in both collections
   try {
-    if (role === ROLES.STUDENT) {
-      console.log('Looking up student with email:', email);
-      user = await Student.findOne({ email }).select('+password');
-    } else if (role === ROLES.TEACHER) {
-      console.log('Looking up teacher with email:', email);
+    // Try to find as student first
+    user = await Student.findOne({ email }).select('+password');
+    if (user) {
+      userRole = ROLES.STUDENT;
+    } 
+    // If not found as student, try as teacher
+    if (!user) {
       user = await Teacher.findOne({ email }).select('+password');
-    } else {
-      console.error('Invalid role during login:', role);
-      throw ApiError.BadRequest('Invalid role');
+      if (user) {
+        userRole = ROLES.TEACHER;
+      }
+    }
+    
+    // If still not found, throw error
+    if (!user) {
+      console.log('No user found with email:', email);
+      throw ApiError.Unauthorized('Invalid email or password');
     }
   } catch (error) {
     console.error('Error during user lookup:', error);
@@ -221,19 +236,44 @@ export const login = asyncHandler(async (req, res) => {
   }
   
   // Check if user exists and password is correct
-  if (!user || !(await user.comparePassword(password))) {
+  if (!user) {
+    console.error('No user found with email:', email);
+    throw ApiError.Unauthorized('Invalid email or password');
+  }
+
+  console.log('User found, comparing password...');
+  const isPasswordValid = await user.comparePassword(password).catch(err => {
+    console.error('Error comparing passwords:', err);
+    return false;
+  });
+
+  if (!isPasswordValid) {
+    console.error('Invalid password for user:', email);
     throw ApiError.Unauthorized('Invalid email or password');
   }
 
   // Generate JWT token
-  const token = generateToken(user, role);
+  let token;
+  try {
+    token = generateToken(user, userRole);
+    console.log(`User ${user._id} (${userRole}) logged in successfully`);
+  } catch (tokenError) {
+    console.error('Token generation failed:', tokenError.message);
+    throw ApiError.InternalServerError('Authentication error');
+  }
 
   // Return response without password
   const userData = user.toObject();
   delete userData.password;
   
   new ApiResponse(res).success(
-    { user: { ...userData, role }, token },
+    { 
+      user: { 
+        ...userData, 
+        role: userRole 
+      }, 
+      token 
+    },
     'Login successful'
   );
 });

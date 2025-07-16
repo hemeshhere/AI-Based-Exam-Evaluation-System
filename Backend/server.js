@@ -30,9 +30,9 @@ console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? '✅ Set' : '❌ Missing'}
 console.log(`- MONGO_URI: ${process.env.MONGO_URI ? '✅ Set' : '❌ Missing'}`);
 
 // Routes
-app.use('/api/exam', examRoutes);
-app.use('/api/question', questionRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/v1/exam', examRoutes);
+app.use('/api/v1/question', questionRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -45,6 +45,38 @@ app.get('/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  
+  // Handle Mongoose validation errors
+  if (err.name === 'ValidationError') {
+    const messages = Object.values(err.errors).map(val => val.message);
+    return res.status(400).json({
+      success: false,
+      message: 'Validation Error',
+      errors: messages
+    });
+  }
+  
+  // Handle duplicate key errors (like duplicate email)
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    const value = err.keyValue[field];
+    return res.status(400).json({
+      success: false,
+      message: `${field} '${value}' is already in use`,
+      field: field
+    });
+  }
+  
+  // Handle custom ApiError
+  if (err.statusCode) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      ...(err.errors && { errors: err.errors })
+    });
+  }
+  
+  // Default to 500 server error
   res.status(500).json({
     success: false,
     message: 'Internal server error',

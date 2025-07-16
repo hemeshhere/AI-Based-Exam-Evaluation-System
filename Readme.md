@@ -183,11 +183,12 @@ The application will be available at:
 ## 🔐 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `POST /api/auth/forgot-password` - Password reset request
-- `POST /api/auth/reset-password` - Password reset confirmation
+- `POST /api/v1/auth/register/student` - Student registration
+- `POST /api/v1/auth/register/teacher` - Teacher registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `POST /api/v1/auth/forgot-password` - Password reset request
+- `POST /api/v1/auth/reset-password` - Password reset confirmation
 
 ### Exams
 - `GET /api/exam/` - Get all exams
