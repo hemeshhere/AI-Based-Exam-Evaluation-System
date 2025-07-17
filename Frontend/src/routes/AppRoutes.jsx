@@ -6,21 +6,13 @@ import RoleSelector from '../components/RoleSelector';
 import StudentLogin from '../components/StudentLogin.jsx';
 import TeacherLogin from '../components/TeacherLogin.jsx';
 import StudentDashboard from '../pages/StudentDashboard.jsx';
-import TeacherDashboard from '../pages/TeacherDashboard.jsx'; // ✅ Add these two
+import TeacherDashboard from '../pages/TeacherDashboard.jsx';
 
-export default function AppRoutes() {
-  const [user, setUser] = useState(null);
-
+export default function AppRoutes({ user, setUser }) {
   return (
     <Routes>
-      {/* Homepage: Role Selection */}
-      <Route path="/" element={<RoleSelector />} />
+      <Route path="/" element={<RoleSelector user={user} setUser={setUser} />} />
 
-      {/* Student and Teacher Separate Login Pages */}
-      <Route path="/student-login" element={<StudentLogin />} />
-      <Route path="/teacher-login" element={<TeacherLogin />} />
-
-      {/* Shared Login with role-based redirection */}
       <Route
         path="/login"
         element={
@@ -36,31 +28,50 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Protected Teacher Dashboard */}
+      {/* ✅ New routes for separate student and teacher login pages */}
+      <Route
+        path="/student-login"
+        element={
+          user?.role === 'student' ? (
+            <Navigate to="/student-dashboard" replace />
+          ) : (
+            <StudentLogin setUser={setUser} />
+          )
+        }
+      />
+      <Route
+        path="/teacher-login"
+        element={
+          user?.role === 'teacher' ? (
+            <Navigate to="/teacher-dashboard" replace />
+          ) : (
+            <TeacherLogin setUser={setUser} />
+          )
+        }
+      />
+
       <Route
         path="/teacher-dashboard"
         element={
           user?.role === 'teacher' ? (
-            <TeacherDashboard user={user} setUser={setUser} />
+            <TeacherDashboard user={user}  setUser={setUser}/>
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/" replace />
           )
         }
       />
 
-      {/* Protected Student Dashboard */}
       <Route
         path="/student-dashboard"
         element={
           user?.role === 'student' ? (
-            <StudentDashboard user={user} setUser={setUser} />
+            <StudentDashboard user={user}  setUser={setUser} />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/" replace />
           )
         }
       />
 
-      {/* Catch-all Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

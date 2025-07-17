@@ -4,7 +4,7 @@ import { User, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Footer from './Footer';
 import TestimonialChat from './TestimonialChat';
-import Login from './Login'; // 👈 import the Login modal
+import Login from './Login';
 
 import img1 from '../assets/image1.jpg';
 import img2 from '../assets/image2.jpg';
@@ -15,16 +15,22 @@ import img6 from '../assets/image6.jpg';
 import img7 from '../assets/image7.jpg';
 import img8 from '../assets/image8.jpg';
 
-export default function RoleSelector() {
+// ✅ Pass user & setUser as props
+export default function RoleSelector({ user, setUser }) {
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const handleSelect = (role) => {
-    if (role === 'student') {
-      navigate('/student-login');
-    } else {
-      navigate('/teacher-login');
+  // ✅ Redirect to dashboard on successful login
+  useEffect(() => {
+    if (user?.role === 'student') {
+      navigate('/student-dashboard');
+    } else if (user?.role === 'teacher') {
+      navigate('/teacher-dashboard');
     }
+  }, [user, navigate]);
+
+  const handleSelect = (role) => {
+    navigate(role === 'student' ? '/student-login' : '/teacher-login');
   };
 
   const imageSets = [
@@ -59,7 +65,7 @@ export default function RoleSelector() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* ☁️ Animated Cloud Background */}
+      {/* ☁️ Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div
           className="absolute w-[300%] h-full animate-cloudScroll opacity-40 bg-repeat-x"
@@ -70,20 +76,18 @@ export default function RoleSelector() {
         />
       </div>
 
-      {/* ✅ Navbar */}
+      {/* Navbar */}
       <nav className="relative z-10 w-full flex justify-between items-center px-6 py-4 shadow-sm border-b bg-white">
         <h1 className="text-2xl font-bold text-blue-600">AiEXAM</h1>
-        <div className="flex gap-4">
-          <button
-            onClick={() => setShowLoginModal(true)} // 👈 Open modal
-            className="px-4 py-2 rounded-md font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
-          >
-            Sign In
-          </button>
-        </div>
+        <button
+          onClick={() => setShowLoginModal(true)}
+          className="px-4 py-2 rounded-md font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
+        >
+          Sign In
+        </button>
       </nav>
 
-      {/* ✅ Hero Section */}
+      {/* Hero Section */}
       <div className="relative z-10 px-4 py-16 flex flex-col items-center bg-gradient-to-b from-sky-100 to-white">
         <h1 className="text-4xl md:text-5xl font-extrabold text-center text-gray-900 leading-tight">
           Where classrooms <br /> become communities
@@ -106,9 +110,7 @@ export default function RoleSelector() {
           </motion.p>
         </AnimatePresence>
 
-        <h2 className="mt-10 text-lg font-semibold text-gray-800">
-          It time to start SignUp as...
-        </h2>
+        <h2 className="mt-10 text-lg font-semibold text-gray-800">It’s time to start SignUp as...</h2>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
           <button
@@ -131,7 +133,7 @@ export default function RoleSelector() {
         </div>
       </div>
 
-      {/* 🖼️ Hanging Images */}
+      {/* Images */}
       <div className="relative bg-sky-100 py-16 overflow-hidden z-10">
         <div className="relative z-10 flex justify-start flex-wrap gap-x-10 gap-y-12 px-6 max-w-6xl mx-auto">
           {images.map((img, index) => (
@@ -151,14 +153,23 @@ export default function RoleSelector() {
         </h2>
       </div>
 
-      {/* ✨ Animations */}
+      <TestimonialChat />
+      <Footer />
+
+      {/* Login Modal */}
+      <Login
+        showModal={showLoginModal}
+        setShowModal={setShowLoginModal}
+        setUser={setUser} // ✅ capture user here
+      />
+
+      {/* Animations */}
       <style>{`
         @keyframes swing {
           0% { transform: rotate(1deg); }
           50% { transform: rotate(-1.5deg); }
           100% { transform: rotate(1deg); }
         }
-
         .swing {
           animation: swing 4s ease-in-out infinite;
         }
@@ -167,23 +178,10 @@ export default function RoleSelector() {
           0% { transform: translateX(0); }
           100% { transform: translateX(-66.66%); }
         }
-
         .animate-cloudScroll {
           animation: cloudScroll 80s linear infinite;
         }
       `}</style>
-
-      <TestimonialChat />
-      <Footer />
-
-      {/* 👇 Sign In Modal */}
-      <Login
-        showModal={showLoginModal}
-        setShowModal={setShowLoginModal}
-        setUser={(user) => {
-          console.log('Logged in user:', user);
-        }}
-      />
     </div>
   );
 }

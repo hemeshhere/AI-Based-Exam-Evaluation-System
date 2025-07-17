@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import {
 	User,
@@ -18,9 +19,12 @@ import StudentIssue from './StudentIssue';
 
 export default function StudentDashboard({ user, setUser }) {
 	const [activeTab, setActiveTab] = useState('profile');
+	const navigate = useNavigate();
 
+	// ✅ Handles logout and redirects to RoleSelector
 	const handleLogout = () => {
 		setUser(null);
+		navigate('/'); // redirect to RoleSelector page
 	};
 
 	const sidebarItems = [
@@ -62,7 +66,7 @@ export default function StudentDashboard({ user, setUser }) {
 
 	return (
 		<div className="min-h-screen bg-gray-50 flex flex-col">
-			{/* Header (desktop) */}
+			{/* Header */}
 			<div className="bg-white shadow-sm border-b border-gray-200 hidden md:block">
 				<div className="flex items-center justify-between px-6 py-4">
 					<div className="flex items-center space-x-3">
@@ -71,9 +75,9 @@ export default function StudentDashboard({ user, setUser }) {
 						</div>
 						<div>
 							<h1 className="text-lg font-semibold text-gray-800">
-								{user?.name || 'John Doe'}
+								{user?.name || 'John Doe'}
 							</h1>
-							<p className="text-sm text-gray-500">Student, Class 10th A</p>
+							<p className="text-sm text-gray-500">Student, Class 10th A</p>
 						</div>
 					</div>
 
@@ -91,9 +95,7 @@ export default function StudentDashboard({ user, setUser }) {
 				{/* Sidebar */}
 				<aside className="w-64 bg-white shadow-lg hidden md:flex flex-col justify-between">
 					<div className="p-6">
-						<h1 className="text-2xl font-bold text-blue-600 mb-8">
-							Student Portal
-						</h1>
+						<h1 className="text-2xl font-bold text-blue-600 mb-8">Student Portal</h1>
 						<nav className="space-y-2">
 							{sidebarItems.map((item) => {
 								const Icon = item.icon;
@@ -101,11 +103,11 @@ export default function StudentDashboard({ user, setUser }) {
 									<button
 										key={item.id}
 										onClick={() => setActiveTab(item.id)}
-										className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-300
-                      ${activeTab === item.id
+										className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-300 ${
+											activeTab === item.id
 												? 'bg-blue-50 text-blue-600 font-semibold border border-blue-200'
 												: 'text-gray-700 font-medium hover:bg-blue-500 hover:text-white'
-											}`}
+										}`}
 									>
 										<Icon className="w-6 h-6" />
 										<span>{item.label}</span>
@@ -140,10 +142,10 @@ export default function StudentDashboard({ user, setUser }) {
 					</header>
 
 					<main className="flex-1 p-4 md:p-8 space-y-12">{renderContent()}</main>
-
 				</div>
 			</div>
-				<Footer />
+
+			<Footer />
 		</div>
 	);
 }

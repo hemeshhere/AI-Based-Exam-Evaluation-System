@@ -1,14 +1,14 @@
-import React from 'react';
-import './App.css';
-import { BrowserRouter as Router } from 'react-router-dom';
-import AppRoutes from './routes/AppRoutes.jsx';
+// App.jsx
+import React, { useState } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './routes/AppRoutes';
 
-function App() {
-	return (
-		<Router>
-			<AppRoutes />
-		</Router>
-	);
+export default function App() {
+  const [user, setUser] = useState(null);
+
+  return (
+    <BrowserRouter>
+      <AppRoutes user={user} setUser={setUser} />
+    </BrowserRouter>
+  );
 }
-
-export default App;
