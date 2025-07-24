@@ -10,11 +10,6 @@ const handleAuthError = error => {
   return Promise.reject(error);
 };
 
-export const isAuthenticated = () => {
-  const { accessToken } = getToken();
-  return !!accessToken;
-};
-
 // Auth APIs
 export const registerStudent = async studentData => {
   try {
