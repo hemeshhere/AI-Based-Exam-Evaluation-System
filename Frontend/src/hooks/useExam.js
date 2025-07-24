@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { apiClient } from "../services/api.js";
 
-const useQuestion = () => {
+const useExam = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const addQuestion = async (examId, questionData) => {
+  const createExam = async (examData) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post(`/api/v1/question/${examId}/questions`, questionData);
+      const response = await apiClient.post("/api/v1/exam", examData);
       return response.data;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add question");
+      setError(err.response?.data?.message || "Failed to create exam");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  return { addQuestion, loading, error };
+  return { createExam, loading, error };
 };
 
-export default useQuestion;
+export default useExam;
