@@ -1,31 +1,29 @@
 import axios from 'axios';
 import { getToken, removeToken } from '../utils/handleTokens.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3003';
 
-
-// Create an Axios instance with default settings
+// Axios instance for authenticated requests
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  withCredentials: true
+  }
 });
 
-// Public client for unauthenticated requests
+// Axios instance for public (unauthenticated) requests
 const publicClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  withCredentials: true
+  }
 });
 
+// Attach token to requests if available
 apiClient.interceptors.request.use(config => {
   const { accessToken } = getToken();
   if (accessToken) {
@@ -34,20 +32,13 @@ apiClient.interceptors.request.use(config => {
   return config;
 });
 
+// Handle 401 errors globally
 apiClient.interceptors.response.use(
-  response => {
-    // Handle successful responses
-    return response;
-  },
+  response => response,
   error => {
-    // Handle errors
-    if (error.response) {
-      const { status, data } = error.response;
-      if (status === 401) {
-        // Token expired or invalid
-        removeToken();
-      }
-      return Promise.reject(data);
+    if (error.response && error.response.status === 401) {
+      removeToken();
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
