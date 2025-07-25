@@ -1,32 +1,41 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, LogOut, Calendar, AlertCircle, BookOpen, Award, Menu, X } from 'lucide-react';
 import Footer from '../components/Footer';
-import {
-    User,
-    LogOut,
-    Calendar,
-    AlertCircle,
-    BookOpen,
-    Award,
-    Menu,
-    X,
-} from 'lucide-react';
 
+// Import Page Components
 import StudentProfile from './StudentProfile';
 import StudentTimetable from './StudentTimetable';
 import StudentExam from './StudentExam';
 import StudentResult from './StudentResult';
 import StudentIssue from './StudentIssue';
 
-export default function StudentDashboard({ user, setUser }) {
+// Configuration for sidebar items
+const sidebarItems = [
+    { id: 'profile', label: 'My Profile', icon: User },
+    { id: 'timetable', label: 'Timetable', icon: Calendar },
+    { id: 'exam', label: 'Take Exam', icon: BookOpen },
+    { id: 'result', label: 'Results', icon: Award },
+    { id: 'issue', label: 'Raise an Issue', icon: AlertCircle },
+];
+
+// Map IDs to components for easy rendering
+const pageComponents = {
+    profile: StudentProfile,
+    timetable: StudentTimetable,
+    exam: StudentExam,
+    result: StudentResult,
+    issue: StudentIssue,
+};
+
+export default function StudentDashboard() {
+    const { user, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('profile');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const navigate = useNavigate();
 
-    const handleLogout = () => {
-        setUser(null);
-        navigate('/');
-    };
+    const ActiveComponent = pageComponents[activeTab];
+    const activeLabel = sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard';
 
     const handleTabClick = (tabId) => {
         setActiveTab(tabId);
@@ -35,97 +44,87 @@ export default function StudentDashboard({ user, setUser }) {
         }
     };
 
-    const sidebarItems = [
-        { id: 'profile', label: 'Profile', icon: User },
-        { id: 'timetable', label: 'Timetable', icon: Calendar },
-        { id: 'exam', label: 'Exam', icon: BookOpen },
-        { id: 'result', label: 'Result', icon: Award },
-        { id: 'issue', label: 'Raise Issue', icon: AlertCircle },
-    ];
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'profile': return <StudentProfile user={user} />;
-            case 'timetable': return <StudentTimetable />;
-            case 'exam': return <StudentExam />;
-            case 'result': return <StudentResult />;
-            case 'issue': return <StudentIssue />;
-            default: return <div className="p-6 text-center text-gray-500">Select a section to begin.</div>;
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar */}
-            <aside
-                className={`bg-white shadow-xl w-64 transform ${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                } md:translate-x-0 transition-transform duration-300 ease-in-out fixed md:relative h-full z-20 flex flex-col`}
-            >
-                <div className="p-6">
-                    <h1 className="text-2xl font-bold text-indigo-600">Student Portal</h1>
-                </div>
-                <nav className="px-4 flex-grow">
-                    {sidebarItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => handleTabClick(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 my-1 rounded-lg text-left transition-all duration-200 ${
-                                    activeTab === item.id
-                                        ? 'bg-indigo-600 text-white shadow-lg'
-                                        : 'text-gray-600 font-medium hover:bg-indigo-50 hover:text-indigo-600'
-                                }`}
-                            >
-                                <Icon className="w-6 h-6" />
-                                <span>{item.label}</span>
-                            </button>
-                        );
-                    })}
-                </nav>
-                <div className="p-4">
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 transition-colors"
+    // Sidebar Component for better organization
+    const Sidebar = () => (
+        <aside 
+            className={`bg-white w-64 flex-shrink-0 flex flex-col border-r border-gray-200 transition-transform duration-300 ease-in-out z-40 
+            md:sticky md:top-0 md:h-screen 
+            ${isSidebarOpen ? 'translate-x-0 fixed h-full' : '-translate-x-full fixed h-full md:relative md:translate-x-0'}`}
+        >
+            <div className="px-6 py-5 border-b border-gray-200">
+                <h1 className="text-2xl font-bold text-indigo-600">Student Portal</h1>
+            </div>
+            {/* ✅ EDITED: Adjusted padding and spacing for better vertical distribution */}
+            <nav className="flex-grow p-4 pt-6 space-y-3">
+                {sidebarItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => handleTabClick(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 font-medium text-sm 
+                            ${isActive ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                        >
+                            <item.icon className="w-5 h-5" />
+                            <span>{item.label}</span>
+                        </button>
+                    );
+                })}
+            </nav>
+            <div className="p-4 border-t border-gray-200">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                    <img 
+                        src={user?.profilePicture || `https://i.pravatar.cc/150?u=${user?.email}`} 
+                        alt="User Avatar" 
+                        className="w-10 h-10 rounded-full" 
+                    />
+                    <div className="flex-1 overflow-hidden">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.rollNumber}</p>
+                    </div>
+                    <button 
+                        onClick={logout} 
+                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-100 rounded-full transition-colors"
+                        aria-label="Logout"
                     >
-                        <LogOut className="w-6 h-6" />
-                        <span className="font-medium">Logout</span>
+                        <LogOut size={18} />
                     </button>
                 </div>
-            </aside>
+            </div>
+        </aside>
+    );
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col">
-                <header className="bg-white shadow-sm p-4 flex justify-between items-center md:hidden sticky top-0 z-10">
-                    <h1 className="text-xl font-bold text-indigo-600">
-                        {sidebarItems.find(i => i.id === activeTab)?.label}
-                    </h1>
-                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md hover:bg-gray-100">
+    return (
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <Sidebar />
+            
+            {/* Main Content Area with independent scrolling */}
+            <div className="flex-1 flex flex-col overflow-y-auto">
+                {/* Sticky Header */}
+                <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30">
+                    <h2 className="text-xl font-bold text-gray-800">{activeLabel}</h2>
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md hover:bg-gray-100 md:hidden">
                         {isSidebarOpen ? <X /> : <Menu />}
                     </button>
                 </header>
-                <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-                    {renderContent()}
+
+                {/* Content with Animation */}
+                <main className="flex-1 p-6 md:p-8">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            {React.createElement(pageComponents[activeTab])}
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
+
                 <Footer />
             </div>
-
-            {/* Mobile Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-t-lg border-t flex justify-around p-1 z-10">
-                {sidebarItems.map((item) => (
-                    <button
-                        key={`mobile-${item.id}`}
-                        onClick={() => handleTabClick(item.id)}
-                        className={`flex flex-col items-center p-2 rounded-lg w-full transition-colors ${
-                            activeTab === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500'
-                        }`}
-                    >
-                        <item.icon className="w-6 h-6 mb-1" />
-                        <span className="text-xs">{item.label}</span>
-                    </button>
-                ))}
-            </nav>
         </div>
     );
 }

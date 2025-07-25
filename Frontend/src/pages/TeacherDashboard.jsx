@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, LogOut, BarChart3, Home, FileText, Calendar, AlertCircle, Settings, Menu, X } from 'lucide-react';
 import Footer from '../components/Footer';
-import {
-  User,
-  LogOut,
-  BarChart3,
-  Home,
-  FileText,
-  Calendar,
-  AlertCircle,
-  Settings,
-} from 'lucide-react';
 
+// Import Page Components
 import TeacherStatistics from './TeacherStatistics';
 import TeacherMainDashboard from './TeacherMainDashboard';
 import TeacherExam from './TeacherExam';
@@ -19,111 +12,119 @@ import TeacherTimetable from './TeacherTimetable';
 import TeacherIssue from './TeacherIssue';
 import TeacherProfile from './TeacherProfile';
 
-const TeacherDashboard = ({ user, setUser }) => {
-  const [activeTab, setActiveTab] = useState('statistics');
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/login');
-  };
-
-  const sidebarItems = [
+// Configuration for sidebar items
+const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-	{ id: 'statistics', label: 'Statistics', icon: BarChart3 },
-    { id: 'exam', label: 'Exam', icon: FileText },
+    { id: 'statistics', label: 'Statistics', icon: BarChart3 },
+    { id: 'exam', label: 'Exam Management', icon: FileText },
     { id: 'timetable', label: 'Timetable', icon: Calendar },
-    { id: 'issue', label: 'Issue', icon: AlertCircle },
+    { id: 'issue', label: 'Reported Issues', icon: AlertCircle },
     { id: 'profile', label: 'Profile', icon: Settings },
-  ];
+];
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'statistics':
-        return <TeacherStatistics />;
-      case 'dashboard':
-        return <TeacherMainDashboard />;
-      case 'exam':
-        return <TeacherExam />;
-      case 'timetable':
-        return <TeacherTimetable />;
-      case 'issue':
-        return <TeacherIssue />;
-      case 'profile':
-        return <TeacherProfile user={user} />;
-      default:
-        return (
-          <div className="p-6 flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="bg-gray-100 rounded-full p-6 mb-4 inline-block">
-                <FileText className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">Coming Soon</h3>
-              <p className="text-gray-500">This section is under development.</p>
-            </div>
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-6 py-5">
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-100 p-2 rounded-full">
-              <User className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-800">{user?.name || 'John Doe'}</h1>
-              <p className="text-sm text-gray-500">Teacher</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Sidebar + Content */}
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-sm border-r border-gray-200 h-[calc(100vh-72px)] p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">Navigation</h2>
-          <nav className="flex flex-col gap-2">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center px-4 py-3 rounded-lg text-left transition-all duration-200 font-medium gap-3
-                    ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-sm">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">{renderContent()}</main>
-      </div>
-        <Footer />
-    </div>
-  );
+// Map IDs to components for easy rendering
+const pageComponents = {
+    dashboard: TeacherMainDashboard,
+    statistics: TeacherStatistics,
+    exam: TeacherExam,
+    timetable: TeacherTimetable,
+    issue: TeacherIssue,
+    profile: TeacherProfile,
 };
 
-export default TeacherDashboard;
+export default function TeacherDashboard() {
+    const { user, logout } = useAuth();
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+    const ActiveComponent = pageComponents[activeTab];
+    const activeLabel = sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard';
+
+    const handleTabClick = (tabId) => {
+        setActiveTab(tabId);
+        if (isSidebarOpen) {
+            setSidebarOpen(false);
+        }
+    };
+
+    // Sidebar Component for better organization
+    const Sidebar = () => (
+        <aside 
+            className={`bg-white w-72 flex-shrink-0 flex flex-col border-r border-gray-200 transition-transform duration-300 ease-in-out z-40 
+            md:sticky md:top-0 md:h-screen 
+            ${isSidebarOpen ? 'translate-x-0 fixed h-full' : '-translate-x-full fixed h-full md:relative md:translate-x-0'}`}
+        >
+            <div className="px-6 py-5 border-b border-gray-200">
+                <h1 className="text-2xl font-bold text-indigo-600">Teacher Portal</h1>
+            </div>
+            <nav className="flex-grow p-4 space-y-2">
+                {sidebarItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => handleTabClick(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 font-medium text-sm 
+                            ${isActive ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                        >
+                            <item.icon className="w-5 h-5" />
+                            <span>{item.label}</span>
+                        </button>
+                    );
+                })}
+            </nav>
+            <div className="p-4 border-t border-gray-200">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+                        {user?.firstName?.charAt(0) || 'T'}{user?.lastName?.charAt(0)}
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{`${user?.firstName} ${user?.lastName}`}</p>
+                        <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                    </div>
+                    <button 
+                        onClick={logout} 
+                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-100 rounded-full transition-colors"
+                        aria-label="Logout"
+                    >
+                        <LogOut size={18} />
+                    </button>
+                </div>
+            </div>
+        </aside>
+    );
+
+    return (
+        <div className="flex h-screen bg-gray-50 overflow-hidden">
+            <Sidebar />
+            
+            {/* Main Content Area with independent scrolling */}
+            <div className="flex-1 flex flex-col overflow-y-auto">
+                {/* Sticky Header */}
+                <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30">
+                    <h2 className="text-xl font-bold text-gray-800">{activeLabel}</h2>
+                    <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md hover:bg-gray-100 md:hidden">
+                        {isSidebarOpen ? <X /> : <Menu />}
+                    </button>
+                </header>
+
+                {/* Content with Animation */}
+                <main className="flex-1 p-6 md:p-8">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <ActiveComponent />
+                        </motion.div>
+                    </AnimatePresence>
+                </main>
+
+                <Footer />
+            </div>
+        </div>
+    );
+};

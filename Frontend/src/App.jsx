@@ -1,14 +1,9 @@
-// App.jsx
-import React, { useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+// src/App.jsx
+
+import React from 'react';
 import AppRoutes from './routes/AppRoutes';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-
-  return (
-    <BrowserRouter>
-      <AppRoutes user={user} setUser={setUser} />
-    </BrowserRouter>
-  );
+  // App is now cleaner. All logic is in AppRoutes and AuthContext.
+  return <AppRoutes />;
 }

@@ -1,148 +1,115 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext'; // ✅ Import useAuth
 import img1 from '../assets/image1.jpg';
 import img2 from '../assets/image2.jpg';
 import img3 from '../assets/image3.jpg';
 
 export default function TeacherLogin() {
-  const [showModal, setShowModal] = useState(false);
+  const { signup, authLoading } = useAuth(); // ✅ Get signup function
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    employeeID: '',
+    title: '',
+    department: '',
+    experienceYears: 0,
+    specialization: [],
+    phoneNumber: '',
+    gender: '',
+    // Add other fields from your model as needed
+  });
 
-  useEffect(() => {
-    document.body.style.overflow = showModal ? 'hidden' : 'auto';
-  }, [showModal]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSpecializationChange = (e) => {
+    // Assuming specialization is a comma-separated string
+    const specializations = e.target.value.split(',').map(s => s.trim());
+    setFormData(prev => ({ ...prev, specialization: specializations }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const result = await signup(formData, 'teacher');
+    if (!result.success) {
+      setError(result.message);
+    }
+  };
 
   return (
-    <div className="w-full relative overflow-hidden">
-      {/* 🌟 Hero Section */}
-      <div
-        className="h-[70vh] bg-cover bg-center relative flex items-center justify-center"
-        style={{ backgroundImage: `url(${img1})` }}
-      >
+    <div className="w-full relative overflow-hidden bg-white">
+      {/* Hero Section */}
+      <div className="h-[70vh] bg-cover bg-center relative flex items-center justify-center" style={{ backgroundImage: `url(${img1})` }}>
         <div className="absolute inset-0 bg-black opacity-60 z-0" />
-        <div className="relative z-10 text-white text-center px-4 max-w-2xl">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Welcome Teachers to AiEXAM</h1>
-          <p className="text-lg md:text-xl mb-4">
-            🧑‍🏫 Shape future minds with AI tools.<br />
-            📊 Create exams, evaluate instantly.<br />
-            💬 Give real-time feedback to students.<br />
-            🚀 Start your smart teaching journey!
-          </p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="mt-6 px-6 py-3 rounded-full bg-white bg-opacity-80 text-blue-700 font-semibold hover:bg-opacity-100 transition-all duration-300"
-          >
-            Join as Teacher
-          </button>
+        <div className="relative z-10 text-white text-center px-4 max-w-3xl">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4">Empower Your Teaching</h1>
+          <p className="text-lg md:text-xl">Join a community of educators using AI to create dynamic exams, provide instant feedback, and inspire students.</p>
         </div>
       </div>
-
-      {/* 🔹 Row 1 */}
-      <div className="flex flex-col md:flex-row items-center justify-center px-6 py-16 gap-10 bg-white relative z-10">
-        <div className="w-full md:w-1/2 flex justify-center">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: -1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            className="w-64 h-64 transform -rotate-3 shadow-lg rounded-xl overflow-hidden"
-          >
-            <img src={img2} alt="Step 1" className="w-full h-full object-cover" />
-          </motion.div>
-        </div>
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="text-center md:text-left w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4 text-blue-600">Upload Tests with Ease</h2>
-            <p className="text-gray-600 text-lg leading-relaxed">
-              Teachers can create theory exams quickly and upload questions. AiEXAM evaluates and manages them smartly.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🔸 Row 2 */}
-      <div className="flex flex-col md:flex-row-reverse items-center justify-center px-6 py-16 gap-10 bg-white relative z-10">
-        <div className="w-full md:w-1/2 flex justify-center">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: 1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            className="w-64 h-64 transform rotate-3 shadow-lg rounded-xl overflow-hidden"
-          >
-            <img src={img3} alt="Step 2" className="w-full h-full object-cover" />
-          </motion.div>
-        </div>
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="text-center md:text-left w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4 text-blue-600">AI-Based Evaluations</h2>
-            <p className="text-gray-600 text-lg leading-relaxed">
-              Get automatic answer checking with smart feedback. Save time and effort while ensuring fairness.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ✅ Signup Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              className="bg-white p-6 rounded-lg shadow-2xl w-[90%] max-w-xl relative"
-            >
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-2 right-2 text-gray-600 hover:text-red-500 text-xl"
-              >
-                &times;
+      
+      {/* Signup Form Section */}
+      <div className="max-w-4xl mx-auto p-6 md:p-10">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white p-8 rounded-2xl shadow-2xl w-full relative border"
+        >
+          <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">Create Your Teacher Account</h2>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              {error && <p className="col-span-2 text-red-500 text-sm text-center bg-red-100 p-3 rounded-lg">{error}</p>}
+              <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="password" name="password" placeholder="Create Password" value={formData.password} onChange={handleChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="employeeID" placeholder="Employee ID" value={formData.employeeID} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <select name="title" value={formData.title} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400 bg-white">
+                  <option value="">Select Title...</option>
+                  <option value="Assistant Professor">Assistant Professor</option>
+                  <option value="Associate Professor">Associate Professor</option>
+                  <option value="Professor">Professor</option>
+                  <option value="Lecturer">Lecturer</option>
+              </select>
+              <select name="department" value={formData.department} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400 bg-white">
+                  <option value="">Select Department...</option>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Electronics">Electronics</option>
+                  {/* Add other departments */}
+              </select>
+              <input type="number" name="experienceYears" placeholder="Years of Experience" value={formData.experienceYears} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="specialization" placeholder="Specializations (comma-separated)" onChange={handleSpecializationChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <select name="gender" value={formData.gender} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400 bg-white">
+                  <option value="">Select Gender...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+              </select>
+              <button type="submit" disabled={authLoading} className="col-span-2 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md disabled:bg-gray-400">
+                  {authLoading ? 'Creating Account...' : 'Create Account'}
               </button>
+          </form>
+        </motion.div>
+      </div>
 
-              <h2 className="text-2xl font-bold text-blue-600 mb-4 text-center">Teacher Sign Up</h2>
-              <form className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-  <input type="text" placeholder="First Name" className="border border-gray-300 p-2 rounded" />
-  <input type="text" placeholder="Last Name" className="border border-gray-300 p-2 rounded" />
-
-  <input type="email" placeholder="Email" className="col-span-2 border border-gray-300 p-2 rounded" />
-  <input type="password" placeholder="Password" className="col-span-2 border border-gray-300 p-2 rounded" />
-
-  <select className="border border-gray-300 p-2 rounded">
-    <option value="">Title</option>
-    <option value="professor">Professor</option>
-    <option value="associate-professor">Associate Professor</option>
-    <option value="hod">Head of Department (HOD)</option>
-    <option value="hos">Head of School (HOS)</option>
-    <option value="other">Other</option>
-  </select>
-
-  <input type="text" placeholder="Department" className="border border-gray-300 p-2 rounded" />
-  <input type="tel" placeholder="Phone Number" className="border border-gray-300 p-2 rounded" />
-
-  <select className="border border-gray-300 p-2 rounded">
-    <option value="">Gender</option>
-    <option value="male">Male</option>
-    <option value="female">Female</option>
-    <option value="other">Other</option>
-  </select>
-
-  <input type="date" placeholder="DOB" className="border border-gray-300 p-2 rounded" />
-  <textarea placeholder="Address" rows="2" className="col-span-2 border border-gray-300 p-2 rounded" />
-
-  <button
-    type="submit"
-    className="col-span-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-  >
-    Create Account
-  </button>
-</form>
-
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+       {/* Feature Sections */}
+       <div className="flex flex-col md:flex-row items-center justify-center px-6 py-16 gap-10 bg-gray-50 relative z-10">
+          <div className="w-full md:w-1/2 flex justify-center">
+              <motion.img src={img2} alt="Step 1" className="w-80 h-80 object-cover transform -rotate-3 shadow-lg rounded-xl" whileHover={{ scale: 1.05, rotate: -5 }} transition={{ type: 'spring', stiffness: 300 }} />
+          </div>
+          <div className="w-full md:w-1/2 text-center md:text-left max-w-md">
+              <h2 className="text-3xl font-bold mb-4 text-blue-600">Upload Tests with Ease</h2>
+              <p className="text-gray-600 text-lg leading-relaxed">Create and upload theory exams in minutes. Our platform intelligently manages and evaluates them for you.</p>
+          </div>
+      </div>
     </div>
   );
 }

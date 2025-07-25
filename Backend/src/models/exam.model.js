@@ -14,7 +14,8 @@ const examSchema = new mongoose.Schema({
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    // ✅ FIXED: Changed ref from 'User' to 'Teacher'
+    ref: 'Teacher', 
     required: true
   },
   isPublished: {
@@ -35,7 +36,6 @@ const examSchema = new mongoose.Schema({
     unique: true,
     validate: {
       validator: function(v) {
-        // Ensure access code is 6 characters long
         return v.length === 6;
       },
       message: 'Access code must be exactly 6 characters long'
@@ -104,42 +104,31 @@ const examSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Add pre-save hook to generate access code
+// Pre-save hook to generate access code
 examSchema.pre('save', async function(next) {
-  // Only generate access code if it's a new document and accessCode is not set
   if (this.isNew && !this.accessCode) {
     let accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
     // Ensure the access code is unique
+    const Exam = mongoose.model('Exam', examSchema);
     while (await Exam.findOne({ accessCode })) {
       accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     }
-    
     this.accessCode = accessCode;
   }
   next();
 });
 
-// Add a method to check if a student can access the exam
+// Method to check if a student can access the exam
 examSchema.methods.canAccess = async function(student, providedAccessCode) {
   if (!student) return false;
-  
-  // Check if exam status is active
   if (this.status !== 'active') return false;
-  
-  // Check if access code matches
   if (this.accessCode !== providedAccessCode) return false;
-  
-  // Check if student's roll number is allowed
   if (this.allowedRollNumbers.length > 0 && !this.allowedRollNumbers.includes(student.rollNumber)) return false;
-  
-  // Check if current time is within exam window
   const now = new Date();
   if (now < this.startTime || now > this.endTime) return false;
-  
-  // Check if student is in the correct batch/section
-  if (student.batch !== this.batch || student.section !== this.section) return false;
-  
+  // Note: Your model doesn't have a 'batch' field on the student model, but does on the exam.
+  // This check might need adjustment based on your final student model.
+  // if (student.batch !== this.batch || student.section !== this.section) return false;
   return true;
 };
 

@@ -1,77 +1,70 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx'; // ✅ Import the useAuth hook
 
-import Login from '../components/Login.jsx';
+// Import Components and Pages
 import RoleSelector from '../components/RoleSelector';
 import StudentLogin from '../components/StudentLogin.jsx';
 import TeacherLogin from '../components/TeacherLogin.jsx';
 import StudentDashboard from '../pages/StudentDashboard.jsx';
 import TeacherDashboard from '../pages/TeacherDashboard.jsx';
+import Login from '../components/Login.jsx';
 
-export default function AppRoutes({ user, setUser }) {
+// A component to protect routes
+const ProtectedRoute = ({ children, role }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated || user.role !== role) {
+    // If not authenticated or role doesn't match, redirect to landing
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+export default function AppRoutes() {
+  const { isAuthenticated, user } = useAuth(); // ✅ Get user state from context
+
   return (
     <Routes>
-      <Route path="/" element={<RoleSelector user={user} setUser={setUser} />} />
-
-      <Route
-        path="/login"
+      {/* --- Public Routes --- */}
+      <Route 
+        path="/" 
         element={
-          user ? (
-            user.role === 'teacher' ? (
-              <Navigate to="/teacher-dashboard" replace />
-            ) : (
-              <Navigate to="/student-dashboard" replace />
-            )
-          ) : (
-            <Login setUser={setUser} showModal={true} setShowModal={() => {}} />
-          )
+          !isAuthenticated ? <RoleSelector /> : 
+          <Navigate to={user.role === 'student' ? '/student-dashboard' : '/teacher-dashboard'} replace />
         }
       />
-
-      {/* ✅ New routes for separate student and teacher login pages */}
-      <Route
-        path="/student-login"
-        element={
-          user?.role === 'student' ? (
-            <Navigate to="/student-dashboard" replace />
-          ) : (
-            <StudentLogin setUser={setUser} />
-          )
-        }
+      <Route 
+        path="/student-login" 
+        element={!isAuthenticated ? <StudentLogin /> : <Navigate to="/student-dashboard" replace />}
       />
-      <Route
-        path="/teacher-login"
-        element={
-          user?.role === 'teacher' ? (
-            <Navigate to="/teacher-dashboard" replace />
-          ) : (
-            <TeacherLogin setUser={setUser} />
-          )
-        }
+      <Route 
+        path="/teacher-login" 
+        element={!isAuthenticated ? <TeacherLogin /> : <Navigate to="/teacher-dashboard" replace />}
       />
+      
+      {/* The generic /login route can now be a modal triggered from RoleSelector */}
+      {/* For simplicity, we'll keep the separate student/teacher login pages */}
+      <Route path="/login" element={<Login />} />
 
-      <Route
-        path="/teacher-dashboard"
-        element={
-          user?.role === 'teacher' ? (
-            <TeacherDashboard user={user}  setUser={setUser}/>
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-
+      {/* --- Protected Routes --- */}
       <Route
         path="/student-dashboard"
         element={
-          user?.role === 'student' ? (
-            <StudentDashboard user={user}  setUser={setUser} />
-          ) : (
-            <Navigate to="/" replace />
-          )
+          <ProtectedRoute role="student">
+            <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/teacher-dashboard"
+        element={
+          <ProtectedRoute role="teacher">
+            <TeacherDashboard />
+          </ProtectedRoute>
         }
       />
 
+      {/* --- Fallback Route --- */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

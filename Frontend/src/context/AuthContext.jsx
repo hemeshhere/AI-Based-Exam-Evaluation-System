@@ -1,7 +1,8 @@
 import { createContext, useEffect, useCallback, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setToken, getToken, removeToken, decodeToken, isTokenExpired } from "../utils/handleToken.js";
-import { login as apiLogin } from "../services/apiServices.js";
+import { setToken, getToken, removeToken, isTokenExpired } from "../utils/handleToken.js";
+import { login as apiLogin, registerStudent, registerTeacher, getMe } from "../services/apiServices.js"; // ✅ Import getMe
+import React from 'react';
 
 export const AuthContext = createContext();
 
@@ -10,33 +11,74 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Check token and set user on mount
+  // ✅ MODIFIED: This effect now fetches the full user profile on load
   useEffect(() => {
-    const { accessToken } = getToken();
-    if (accessToken && !isTokenExpired(accessToken)) {
-      const decoded = decodeToken(accessToken);
-      setUser(decoded);
-    } else {
-      setUser(null);
-      removeToken();
-    }
-    setAuthLoading(false);
+    const fetchUser = async () => {
+      const { accessToken } = getToken();
+      if (accessToken && !isTokenExpired(accessToken)) {
+        try {
+          // Instead of just decoding, we fetch the full user object
+          const response = await getMe();
+          setUser(response.data.user); // The backend wraps the user in response.data.user
+        } catch (error) {
+          console.error("Failed to fetch user profile, logging out.", error);
+          removeToken();
+          setUser(null);
+        }
+      }
+      setAuthLoading(false);
+    };
+
+    fetchUser();
   }, []);
 
-  // Login function
+  // Universal login function
   const login = useCallback(async (credentials) => {
     setAuthLoading(true);
     try {
-      const data = await apiLogin(credentials);
-      setToken(data);
-      const decoded = decodeToken(data.accessToken);
-      setUser(decoded);
-      navigate("/");
-      return true;
-    } catch (err) {
-      setUser(null);
+      const response = await apiLogin(credentials);
+      // The user object is at response.data.user
+      const loggedInUser = response.data.user; 
+      setUser(loggedInUser);
+      if (loggedInUser.role === 'student') {
+        navigate('/student-dashboard');
+      } else if (loggedInUser.role === 'teacher') {
+        navigate('/teacher-dashboard');
+      } else {
+        navigate('/');
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Login failed:", error.response?.data?.message || error.message);
       removeToken();
-      return false;
+      setUser(null);
+      return { success: false, message: error.response?.data?.message || "Invalid credentials" };
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [navigate]);
+
+  // Universal signup function
+  const signup = useCallback(async (userData, role) => {
+    setAuthLoading(true);
+    try {
+      let response;
+      if (role === 'student') {
+        response = await registerStudent(userData);
+      } else {
+        response = await registerTeacher(userData);
+      }
+      const signedUpUser = response.data.user;
+      setUser(signedUpUser);
+      if (role === 'student') {
+        navigate('/student-dashboard');
+      } else {
+        navigate('/teacher-dashboard');
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Signup failed:", error.response?.data?.message || error.message);
+      return { success: false, message: error.response?.data?.message || "Registration failed. Please check your data." };
     } finally {
       setAuthLoading(false);
     }
@@ -46,20 +88,8 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     removeToken();
     setUser(null);
-    navigate("/login");
+    navigate('/');
   }, [navigate]);
-
-  // Check if user is authenticated
-  const checkAuth = useCallback(() => {
-    const { accessToken } = getToken();
-    if (accessToken && !isTokenExpired(accessToken)) {
-      setUser(decodeToken(accessToken));
-      return true;
-    }
-    setUser(null);
-    removeToken();
-    return false;
-  }, []);
 
   return (
     <AuthContext.Provider value={{
@@ -67,10 +97,14 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: !!user,
       authLoading,
       login,
+      signup,
       logout,
-      checkAuth
     }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
 };

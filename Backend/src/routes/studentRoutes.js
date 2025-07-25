@@ -11,6 +11,10 @@ router.use(authorize('student'));
 // Get active exams for student
 router.get('/exams/active', studentController.getActiveExams);
 
+router.get('/timetable', studentController.getStudentTimetable);
+
+router.get('/exams/active', studentController.getActiveExams);
+
 // Start an exam
 router.post('/exams/:examId/start', studentController.startExam);
 

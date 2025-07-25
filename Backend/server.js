@@ -7,6 +7,7 @@ import questionRoutes from './src/routes/questionRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import studentRoutes from './src/routes/studentRoutes.js';
 import teacherRoutes from './src/routes/teacherRoutes.js';
+import issueRoutes from './src/routes/issueRoutes.js';
 
 // Check for required environment variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
@@ -36,6 +37,7 @@ app.use('/api/v1/question', questionRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
+app.use('/api/v1/issues', issueRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -49,42 +51,22 @@ app.get('/health', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   
-  // Handle Mongoose validation errors
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map(val => val.message);
-    return res.status(400).json({
-      success: false,
-      message: 'Validation Error',
-      errors: messages
-    });
+    return res.status(400).json({ success: false, message: 'Validation Error', errors: messages });
   }
   
-  // Handle duplicate key errors (like duplicate email)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     const value = err.keyValue[field];
-    return res.status(400).json({
-      success: false,
-      message: `${field} '${value}' is already in use`,
-      field: field
-    });
+    return res.status(400).json({ success: false, message: `${field} '${value}' is already in use`, field: field });
   }
   
-  // Handle custom ApiError
   if (err.statusCode) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      ...(err.errors && { errors: err.errors })
-    });
+    return res.status(err.statusCode).json({ success: false, message: err.message, ...(err.errors && { errors: err.errors }) });
   }
   
-  // Default to 500 server error
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+  res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 
 // MongoDB connection
@@ -104,18 +86,4 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
-// Global error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal Server Error',
-  });
-});
-
-// Start the server on the specified port
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
+// ✅ REMOVED: The duplicate global error handler and server start block were here.

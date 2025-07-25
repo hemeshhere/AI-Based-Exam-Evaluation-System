@@ -34,7 +34,6 @@ const questionSchema = new mongoose.Schema({
     type: [optionSchema],
     validate: {
       validator: function (v) {
-        // MCQ must have at least 2 options, Subjective must have none
         if (this.type === 'MCQ') return v && v.length >= 2;
         if (this.type === 'Subjective') return !v || v.length === 0;
         return true;
@@ -61,7 +60,8 @@ const questionSchema = new mongoose.Schema({
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    // ✅ FIXED: Changed ref from 'User' to 'Teacher'
+    ref: 'Teacher',
     required: true
   }
 }, { timestamps: true });
