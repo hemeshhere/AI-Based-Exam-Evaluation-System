@@ -74,3 +74,63 @@ export const getStudentTimetable = async () => {
   const response = await apiClient.get('/api/v1/student/timetable');
   return response.data;
 };
+
+export const createExamWithQuestions = async (examData) => {
+  // This uses the apiClient which automatically includes the teacher's auth token
+  const response = await apiClient.post('/api/v1/teacher/exams', examData);
+  return response.data;
+};
+export const getTeacherExams = async () => {
+  const response = await apiClient.get('/api/v1/teacher/exams');
+  return response.data;
+};
+
+
+export const getExamDetails = async (examId) => {
+  const response = await apiClient.get(`/api/v1/teacher/exams/${examId}`);
+  return response.data;
+};
+
+export const deleteExam = async (examId) => {
+  const response = await apiClient.delete(`/api/v1/teacher/exams/${examId}`);
+  return response.data;
+};
+
+
+
+export const getActiveExams = async () => {
+  const response = await apiClient.get('/api/v1/student/exams/active');
+  return response.data;
+};
+
+export const startExam = async (examId, accessCode) => {
+  const response = await apiClient.post(`/api/v1/student/exams/${examId}/start`, { accessCode });
+  return response.data;
+};
+
+export const submitExam = async (submissionId, answers) => {
+  const response = await apiClient.put(`/api/v1/student/submissions/${submissionId}/submit`, { answers });
+  return response.data;
+};
+
+
+export const getExamSubmissions = async (examId) => {
+  const response = await apiClient.get(`/api/v1/teacher/exams/${examId}/submissions`);
+  return response.data;
+};
+
+export const evaluateAnswerWithAI = async (submissionId, questionId) => {
+  const response = await apiClient.post('/api/v1/teacher/submissions/evaluate-ai', { submissionId, questionId });
+  return response.data;
+};
+
+
+export const publishResults = async (examId) => {
+  const response = await apiClient.post(`/api/v1/teacher/exams/${examId}/publish-results`);
+  return response.data;
+};
+
+export const getStudentResults = async () => {
+  const response = await apiClient.get('/api/v1/student/results');
+  return response.data;
+};

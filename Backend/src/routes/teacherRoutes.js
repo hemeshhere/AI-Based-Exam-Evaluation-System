@@ -4,47 +4,36 @@ import * as teacherController from '../controllers/teacherController.js';
 
 const router = express.Router();
 
-// Log all teacher route requests
-router.use((req, res, next) => {
-  console.log(`[TEACHER ROUTE] ${req.method} ${req.originalUrl}`);
-  next();
-});
+// Apply authentication and authorization for all teacher routes
+router.use(verifyToken, authorize('teacher'));
 
-// Verify token first
-router.use(verifyToken);
+// --- Core Exam and Submission Routes ---
 
-// Then check for teacher role
-router.use((req, res, next) => {
-  console.log('Checking teacher authorization for user:', req.user?.email);
-  next();
-}, authorize('teacher'));
+// Create a new exam with questions
+router.post('/exams', teacherController.createExamWithQuestions);
 
-// Debug endpoint to check auth status
-router.get('/debug/auth', (req, res) => {
-  res.status(200).json({
-    success: true,
-    user: req.user || null,
-    headers: req.headers,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Update exam
-router.put('/exams/:examId', teacherController.updateExam);
-
-// Create a new exam
-router.post('/exams', teacherController.createExam);
-
-// Get all exams created by teacher
+// Get all exams created by the logged-in teacher
 router.get('/exams', teacherController.getTeacherExams);
 
-// Get submissions for an exam
+// Get all submissions for a specific exam
 router.get('/exams/:examId/submissions', teacherController.getExamSubmissions);
 
-// Grade a submission
-router.put('/submissions/:submissionId/grade', teacherController.gradeSubmission);
+// --- AI and Manual Grading Routes ---
 
-// Publish exam results
+// Evaluate a specific answer using AI
+router.post('/submissions/evaluate-ai', teacherController.evaluateAnswerWithAI);
+
+
+// ✅ NEW: Route to get details of a single exam
+router.get('/exams/:examId', teacherController.getExamDetails);
+
+// ✅ NEW: Route to delete an exam
+router.delete('/exams/:examId', teacherController.deleteExam);
+
+
 router.post('/exams/:examId/publish-results', teacherController.publishResults);
+
+;
+
 
 export default router;

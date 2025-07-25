@@ -2,203 +2,184 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import Exam from '../models/exam.model.js';
+import Question from '../models/question.model.js';
 import Submission from '../models/submission.model.js';
+import fetch from 'node-fetch';
 
-// Create a new exam
-export const createExam = asyncHandler(async (req, res) => {
-  const teacher = req.user;
-  
-  // Create exam object first
-  const exam = new Exam({
-    ...req.body,
-    createdBy: teacher._id,
-    employeeId: teacher.employeeId
-  });
-  
-  // Save the exam (this will trigger the pre-save hook)
-  await exam.save();
-  
-  // Convert to plain object and add access code to response
-  const examObj = exam.toObject();
-  
-  const apiResponse = new ApiResponse(res);
-  apiResponse.success(201, {
-    ...examObj,
-    accessCode: examObj.accessCode
-  }, 'Exam created successfully');
-});
-
-// Get all exams created by teacher
-export const getTeacherExams = asyncHandler(async (req, res) => {
-  const teacher = req.user;
-  
-  const exams = await Exam.find({ createdBy: teacher._id })
-    .select('-questions -answerKey -__v')
-    .sort({ createdAt: -1 });
-  
-  if (exams.length === 0) {
-    return res.status(200).json({
-      status: 'success',
-      message: 'No exams available',
-      data: []
-    });
-  }
-  
-  return res.status(200).json({
-    status: 'success',
-    message: 'Exams fetched successfully',
-    data: exams
-  });
-});
-
-// Update exam status
-export const updateExam = asyncHandler(async (req, res) => {
-  const { examId } = req.params;
-  const teacher = req.user;
-  const { status } = req.body;
-
-  // Verify teacher owns the exam
-  const exam = await Exam.findOne({
-    _id: examId,
-    createdBy: teacher._id
-  });
-
-  if (!exam) {
-    throw new ApiError(404, 'Exam not found');
-  }
-
-  // Update exam status
-  exam.status = status;
-  await exam.save();
-
-  const apiResponse = new ApiResponse(res);
-  apiResponse.success(200, exam, 'Exam status updated successfully');
-});
-
-// Get submissions for an exam
-export const getExamSubmissions = asyncHandler(async (req, res) => {
-  const { examId } = req.params;
-  const teacher = req.user;
-  
-  // Verify teacher owns the exam
-  const exam = await Exam.findOne({
-    _id: examId,
-    createdBy: teacher._id
-  });
-  
-  if (!exam) {
-    throw new ApiError(404, 'Exam not found');
-  }
-  
-  const submissions = await Submission.find({ exam: examId })
-    .populate('student', 'firstName lastName rollNumber')
-    .select('-answers -__v');
-  
-  res.status(200).json(
-    new ApiResponse(200, submissions, 'Submissions fetched successfully')
-  );
-});
-
-// Grade a submission
-export const gradeSubmission = asyncHandler(async (req, res) => {
-  const { submissionId } = req.params;
-  const { answers, totalMarks, remarks, isPassed } = req.body;
-  const teacher = req.user;
-  
-  const submission = await Submission.findById(submissionId)
-    .populate('exam', 'createdBy');
-  
-  if (!submission) {
-    throw new ApiError(404, 'Submission not found');
-  }
-  
-  // Verify teacher owns the exam
-  if (submission.exam.createdBy.toString() !== teacher._id.toString()) {
-    throw new ApiError(403, 'Not authorized to grade this submission');
-  }
-  
-  // Update submission
-  submission.answers = answers || submission.answers;
-  submission.totalMarks = totalMarks !== undefined ? totalMarks : submission.totalMarks;
-  submission.remarks = remarks || submission.remarks;
-  submission.isPassed = isPassed !== undefined ? isPassed : submission.isPassed;
-  submission.status = 'evaluated';
-  submission.evaluatedBy = teacher._id;
-  submission.evaluatedAt = new Date();
-  
-  await submission.save();
-  
-  res.status(200).json(
-    new ApiResponse(200, submission, 'Submission graded successfully')
-  );
-});
-
-// Publish exam results
-export const publishResults = asyncHandler(async (req, res) => {
-  const { examId } = req.params;
-  const teacher = req.user;
-  
-  // Verify teacher owns the exam
-  const exam = await Exam.findOne({
-    _id: examId,
-    createdBy: teacher._id
-  });
-  
-  if (!exam) {
-    throw new ApiError(404, 'Exam not found');
-  }
-  
-  // Update all evaluated submissions to published
-  const result = await Submission.updateMany(
-    { 
-      exam: examId,
-      status: 'evaluated' 
-    },
-    { 
-      $set: { status: 'published' } 
+export const createExamWithQuestions = asyncHandler(async (req, res) => {
+    const { examDetails, questions } = req.body;
+    if (!examDetails || !questions || !Array.isArray(questions) || questions.length === 0) {
+        throw new ApiError(400, 'Exam details and at least one question are required.');
     }
-  );
-  
-  res.status(200).json(
-    new ApiResponse(200, result, 'Results published successfully')
-  );
+    const newExam = await Exam.create({ ...examDetails, createdBy: req.user._id });
+    const questionDocs = questions.map(q => ({ ...q, exam: newExam._id, createdBy: req.user._id }));
+    const createdQuestions = await Question.insertMany(questionDocs);
+    newExam.questions = createdQuestions.map(q => q._id);
+    await newExam.save();
+    const populatedExam = await Exam.findById(newExam._id).populate('questions');
+    return new ApiResponse(res).success(201, populatedExam, 'Exam created successfully');
 });
 
-// Generate new access code for an existing exam
-export const generateAccessCode = asyncHandler(async (req, res) => {
-  const { examId } = req.params;
-  
-  const exam = await Exam.findById(examId);
-  if (!exam) {
-    throw new ApiError(404, 'Exam not found');
-  }
-
-  // Check if user is the creator of this exam
-  if (exam.createdBy.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, 'You are not authorized to modify this exam');
-  }
-
-  // Generate a new unique access code
-  let newAccessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  
-  // Ensure the access code is unique
-  while (await Exam.findOne({ accessCode: newAccessCode })) {
-    newAccessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  }
-
-  exam.accessCode = newAccessCode;
-  await exam.save();
-
-  new ApiResponse(res).success(
-    { accessCode: newAccessCode },
-    'Access code generated successfully'
-  );
+export const getTeacherExams = asyncHandler(async (req, res) => {
+    const exams = await Exam.find({ createdBy: req.user._id }).select('-questions').sort({ createdAt: -1 });
+    return new ApiResponse(res).success(200, exams, 'Exams fetched successfully');
 });
 
-export default {
-  createExam,
-  getTeacherExams,
-  getExamSubmissions,
-  gradeSubmission,
-  publishResults
-};
+export const getExamDetails = asyncHandler(async (req, res) => {
+    const { examId } = req.params;
+    const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id }).populate('questions');
+    if (!exam) throw new ApiError(404, 'Exam not found or you are not authorized.');
+    return new ApiResponse(res).success(200, exam, 'Exam details fetched successfully.');
+});
+
+export const deleteExam = asyncHandler(async (req, res) => {
+    const { examId } = req.params;
+    const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id });
+    if (!exam) throw new ApiError(404, 'Exam not found or you are not authorized.');
+    await Question.deleteMany({ exam: examId });
+    await Exam.findByIdAndDelete(examId);
+    return new ApiResponse(res).success(200, { deletedExamId: examId }, 'Exam deleted successfully.');
+});
+
+export const getExamSubmissions = asyncHandler(async (req, res) => {
+    const { examId } = req.params;
+    const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id });
+    if (!exam) {
+        throw new ApiError(404, 'Exam not found or you are not authorized to view its submissions.');
+    }
+    const submissions = await Submission.find({ exam: examId })
+        .populate('student', 'firstName lastName rollNumber')
+        .populate({
+            path: 'exam',
+            populate: {
+                path: 'questions'
+            }
+        });
+    return new ApiResponse(res).success(200, submissions, 'Submissions fetched successfully.');
+});
+
+export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
+    const { submissionId, questionId } = req.body;
+
+    if (!submissionId || !questionId) {
+        throw new ApiError(400, 'Submission ID and Question ID are required.');
+    }
+
+    // Correctly populate the submission with its exam and the exam's questions
+    const submission = await Submission.findById(submissionId).populate({
+        path: 'exam',
+        populate: {
+            path: 'questions'
+        }
+    });
+
+    if (!submission) {
+        throw new ApiError(404, 'Submission not found.');
+    }
+
+    const question = submission.exam.questions.find(q => q._id.toString() === questionId);
+    const studentAnswerObject = submission.answers.find(ans => ans.question.toString() === questionId);
+
+    if (!question || !studentAnswerObject) {
+        throw new ApiError(404, 'Question or Answer not found within this submission.');
+    }
+    
+    const studentAnswerText = studentAnswerObject.response;
+
+    // --- Prompt Engineering ---
+    let prompt;
+    const hasModelAnswer = question.modelAnswer && question.modelAnswer.trim() !== '';
+    const outputFormat = 'Provide your response in a strict JSON format with two keys: "marks" (a number out of ' + question.marks + ') and "feedback" (a string in markdown format explaining the evaluation).';
+
+    if (hasModelAnswer) {
+        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. Original Question: "${question.text}". Model Answer: "${question.modelAnswer}". Student's Answer: "${studentAnswerText}". Evaluate the student's answer based on the model answer. ${outputFormat}`;
+    } else {
+        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. The Question is: "${question.text}". The Student's Answer is: "${studentAnswerText}". Based on your expert knowledge, evaluate the student's answer. ${outputFormat}`;
+    }
+
+    // --- Gemini API Call ---
+    let aiResponse;
+    try {
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        if (!GEMINI_API_KEY) {
+            throw new ApiError(500, 'GEMINI_API_KEY is not configured on the server.');
+        }
+        
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error("Gemini API Error Response:", errorBody);
+            throw new ApiError(500, `Error from Gemini API: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.candidates || !data.candidates[0].content.parts[0].text) {
+            throw new ApiError(500, "Received an invalid response structure from Gemini API.");
+        }
+
+        const rawText = data.candidates[0].content.parts[0].text;
+        
+        try {
+            const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiResponse = JSON.parse(jsonText);
+        } catch (parseError) {
+            console.error("Failed to parse JSON from Gemini response:", parseError);
+            aiResponse = {
+                marks: 0,
+                feedback: `AI response could not be parsed correctly. Raw AI output: ${rawText}`
+            };
+        }
+
+    } catch (error) {
+        console.error("Gemini API Call Error:", error);
+        throw new ApiError(500, "Failed to get a response from the AI evaluation service.");
+    }
+
+    // --- Update Database ---
+    studentAnswerObject.marksAwarded = aiResponse.marks;
+    studentAnswerObject.feedback = aiResponse.feedback;
+
+    // Recalculate total marks for the submission
+    submission.totalMarks = submission.answers.reduce((total, ans) => {
+        return total + (ans.marksAwarded || 0);
+    }, 0);
+    
+    submission.status = 'evaluated';
+    submission.evaluatedBy = req.user._id;
+    submission.evaluatedAt = new Date();
+    submission.markModified('answers');
+    await submission.save();
+    
+    const updatedSubmission = await Submission.findById(submissionId).populate({ path: 'exam', populate: { path: 'questions' } });
+
+    return new ApiResponse(res).success(200, updatedSubmission, 'Answer evaluated by AI successfully.');
+});
+
+export const publishResults = asyncHandler(async (req, res) => {
+    const { examId } = req.params;
+    const teacherId = req.user._id;
+
+    const exam = await Exam.findOne({ _id: examId, createdBy: teacherId });
+    if (!exam) {
+        throw new ApiError(404, 'Exam not found or you are not authorized.');
+    }
+
+    const result = await Submission.updateMany(
+        { exam: examId, status: 'evaluated' },
+        { $set: { status: 'published' } }
+    );
+
+    if (result.modifiedCount === 0) {
+        throw new ApiError(400, 'No evaluated submissions were found to publish.');
+    }
+
+    return new ApiResponse(res).success(200, { modifiedCount: result.modifiedCount }, `${result.modifiedCount} result(s) published successfully.`);
+});

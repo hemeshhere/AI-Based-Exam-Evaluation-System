@@ -163,3 +163,5 @@ const TimetableCard = ({ entry, isUpcoming }) => {
 };
 
 export default StudentTimetable;
+
+

@@ -1,32 +1,38 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, BarChart3, Home, FileText, Calendar, AlertCircle, Settings, Menu, X } from 'lucide-react';
+import { User, LogOut, BarChart3, Home, FileText, Calendar, AlertCircle, Settings, Menu, X, Archive, CheckSquare } from 'lucide-react';
 import Footer from '../components/Footer';
 
-// Import Page Components
+// Import All Page Components
 import TeacherStatistics from './TeacherStatistics';
 import TeacherMainDashboard from './TeacherMainDashboard';
 import TeacherExam from './TeacherExam';
 import TeacherTimetable from './TeacherTimetable';
 import TeacherIssue from './TeacherIssue';
 import TeacherProfile from './TeacherProfile';
+import TeacherPreviousPapers from './TeacherPreviousPapers';
+import TeacherEvaluation from './TeacherEvaluation';
 
-// Configuration for sidebar items
+// ✅ RESTORED: Sidebar now has separate buttons
 const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'statistics', label: 'Statistics', icon: BarChart3 },
     { id: 'exam', label: 'Exam Management', icon: FileText },
+    { id: 'previous-papers', label: 'Previous Papers', icon: Archive },
+    { id: 'evaluation', label: 'Evaluation', icon: CheckSquare },
     { id: 'timetable', label: 'Timetable', icon: Calendar },
     { id: 'issue', label: 'Reported Issues', icon: AlertCircle },
     { id: 'profile', label: 'Profile', icon: Settings },
 ];
 
-// Map IDs to components for easy rendering
+// ✅ RESTORED: Component map is updated
 const pageComponents = {
     dashboard: TeacherMainDashboard,
     statistics: TeacherStatistics,
     exam: TeacherExam,
+    'previous-papers': TeacherPreviousPapers,
+    evaluation: TeacherEvaluation,
     timetable: TeacherTimetable,
     issue: TeacherIssue,
     profile: TeacherProfile,
@@ -97,18 +103,13 @@ export default function TeacherDashboard() {
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <Sidebar />
-            
-            {/* Main Content Area with independent scrolling */}
             <div className="flex-1 flex flex-col overflow-y-auto">
-                {/* Sticky Header */}
                 <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-30">
                     <h2 className="text-xl font-bold text-gray-800">{activeLabel}</h2>
                     <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md hover:bg-gray-100 md:hidden">
                         {isSidebarOpen ? <X /> : <Menu />}
                     </button>
                 </header>
-
-                {/* Content with Animation */}
                 <main className="flex-1 p-6 md:p-8">
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -122,7 +123,6 @@ export default function TeacherDashboard() {
                         </motion.div>
                     </AnimatePresence>
                 </main>
-
                 <Footer />
             </div>
         </div>

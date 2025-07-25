@@ -1,231 +1,254 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, ChevronRight, CheckCircle, FileText, Settings, ListPlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createExamWithQuestions } from '../services/apiServices'; 
 
 const TeacherExam = () => {
-  const [subject, setSubject] = useState('');
-  const [numQuestions, setNumQuestions] = useState(0);
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [submittedPapers, setSubmittedPapers] = useState([]);
+    const [step, setStep] = useState(1);
+    const [examDetails, setExamDetails] = useState({
+        title: '',
+        department: 'Computer Science',
+        year: '1',
+        semester: '1',
+        section: 'A',
+        batch: '2024-2028',
+        date: '',
+        startTime: '',
+        endTime: '',
+        durationMinutes: 60,
+    });
+    const [questions, setQuestions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
-  const handleQuestionChange = (index, field, value) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions[index][field] = value;
-    setQuestions(updatedQuestions);
-  };
+    const handleDetailChange = (e) => {
+        const { name, value } = e.target;
+        setExamDetails(prev => ({ ...prev, [name]: value }));
+    };
 
-  const handleOptionChange = (qIndex, optIndex, value) => {
-    const updated = [...questions];
-    updated[qIndex].options[optIndex] = value;
-    setQuestions(updated);
-  };
+    const addQuestion = () => {
+        setQuestions(prev => [...prev, {
+            type: 'Subjective',
+            text: '',
+            marks: 5,
+            modelAnswer: '',
+            options: [
+                { text: '', isCorrect: true }, 
+                { text: '', isCorrect: false },
+                { text: '', isCorrect: false },
+                { text: '', isCorrect: false }
+            ]
+        }]);
+    };
 
-  const generateQuestionFields = () => {
-    if (!subject.trim() || numQuestions < 1) {
-      return alert("Please enter subject and a valid question count.");
-    }
+    const handleQuestionChange = (index, field, value) => {
+        const newQuestions = [...questions];
+        newQuestions[index][field] = value;
+        setQuestions(newQuestions);
+    };
+    
+    const handleOptionChange = (qIndex, oIndex, field, value) => {
+        const newQuestions = [...questions];
+        if (field === 'isCorrect') {
+            newQuestions[qIndex].options.forEach((opt, i) => opt.isCorrect = i === oIndex);
+        } else {
+            newQuestions[qIndex].options[oIndex][field] = value;
+        }
+        setQuestions(newQuestions);
+    };
 
-    const newQuestions = Array.from({ length: numQuestions }, () => ({
-      type: 'subjective',
-      question: '',
-      marks: '',
-      options: ['', '', '', '']
-    }));
-    setQuestions(newQuestions);
-    setCurrentIndex(0);
-  };
+    const removeQuestion = (index) => {
+        setQuestions(prev => prev.filter((_, i) => i !== index));
+    };
 
-  const handleSubmit = async () => {
-    if (!subject || questions.length === 0) return alert("Subject and questions are required.");
+    const handleSubmit = async () => {
+        setError('');
+        setSuccess('');
+        setLoading(true);
 
-    try {
-      const payload = { subject, questions };
-      const res = await axios.post('http://localhost:5000/api/questions', payload);
+        if (questions.length === 0) {
+            setError('Please add at least one question.');
+            setLoading(false);
+            return;
+        }
+        
+        const payload = {
+            examDetails: {
+                ...examDetails,
+                description: `Exam for ${examDetails.department}, Semester ${examDetails.semester}`,
+                startTime: `${examDetails.date}T${examDetails.startTime}:00`,
+                endTime: `${examDetails.date}T${examDetails.endTime}:00`,
+            },
+            questions: questions.map(q => {
+                const { options, ...rest } = q;
+                if (q.type === 'MCQ') {
+                    // Filter out empty options before sending
+                    const nonEmptyOptions = options.slice(0, 4).filter(opt => opt.text.trim() !== '');
+                    return { ...rest, options: nonEmptyOptions };
+                }
+                return { ...rest, options: [] };
+            })
+        };
 
-      if (res.status === 201) {
-        setSubmittedPapers([...submittedPapers, payload]);
-        setSubject('');
-        setNumQuestions(0);
-        setQuestions([]);
-        setCurrentIndex(0);
-      }
-    } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Failed to upload. Check console for details.');
-    }
-  };
+        try {
+            await createExamWithQuestions(payload);
+            setSuccess('Exam created successfully!');
+            setTimeout(() => {
+                setStep(1);
+                setExamDetails({ title: '', department: 'Computer Science', year: '1', semester: '1', section: 'A', batch: '2024-2028', date: '', startTime: '', endTime: '', durationMinutes: 60 });
+                setQuestions([]);
+                setSuccess('');
+            }, 2000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create exam.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const handleNew = () => {
-    setSubject('');
-    setNumQuestions(0);
-    setQuestions([]);
-    setCurrentIndex(0);
-  };
-
-  const currentQuestion = questions[currentIndex];
-
-  return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold text-indigo-700">📘 Exam Dashboard</h2>
-        <button
-          onClick={handleNew}
-          className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-md hover:bg-indigo-200 flex items-center gap-2"
-        >
-          <Plus size={18} /> New
-        </button>
-      </div>
-
-      {/* Form Section */}
-      <div className="bg-white p-6 rounded-lg shadow-md border space-y-6">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium mb-1">Subject</label>
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="w-full border border-gray-300 p-2 rounded"
-              placeholder="e.g., Chemistry"
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Number of Questions</label>
-            <input
-              type="number"
-              value={numQuestions}
-              onChange={(e) => setNumQuestions(Number(e.target.value))}
-              className="w-full border border-gray-300 p-2 rounded"
-              min={1}
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={generateQuestionFields}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Generate Questions
-        </button>
-
-        {/* Question Navigator */}
-        {questions.length > 0 && (
-          <div className="space-y-4">
-            <div className="border border-gray-300 p-4 rounded bg-gray-50">
-              <h4 className="font-semibold text-lg text-gray-700">Question {currentIndex + 1} of {questions.length}</h4>
-
-              <div>
-                <label className="block text-sm mb-1">Type</label>
-                <select
-                  value={currentQuestion.type}
-                  onChange={(e) => handleQuestionChange(currentIndex, 'type', e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="subjective">Subjective</option>
-                  <option value="mcq">MCQ</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Question Text</label>
-                <input
-                  value={currentQuestion.question}
-                  onChange={(e) => handleQuestionChange(currentIndex, 'question', e.target.value)}
-                  className="w-full p-2 border rounded"
-                  placeholder="Enter question"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Marks</label>
-                <input
-                  type="number"
-                  value={currentQuestion.marks}
-                  onChange={(e) => handleQuestionChange(currentIndex, 'marks', e.target.value)}
-                  className="w-full p-2 border rounded"
-                  placeholder="e.g. 5"
-                />
-              </div>
-
-              {currentQuestion.type === 'mcq' && (
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center gap-4">
+                <div className="bg-indigo-100 p-3 rounded-xl"><FileText className="w-8 h-8 text-indigo-600" /></div>
                 <div>
-                  <label className="block text-sm mb-1">Options</label>
-                  {currentQuestion.options.map((opt, idx) => (
-                    <input
-                      key={idx}
-                      value={opt}
-                      onChange={(e) => handleOptionChange(currentIndex, idx, e.target.value)}
-                      className="w-full mb-2 p-2 border rounded"
-                      placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                    />
-                  ))}
+                    <h1 className="text-3xl font-bold text-gray-800">Exam Management</h1>
+                    <p className="text-gray-500">Create and configure new exams for your students.</p>
                 </div>
-              )}
             </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center">
-              <button
-                onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
-                disabled={currentIndex === 0}
-              >
-                Previous
-              </button>
-
-              {currentIndex === questions.length - 1 ? (
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  Upload Paper
-                </button>
-              ) : (
-                <button
-                  onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Next
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Uploaded Papers */}
-      <div>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">📑 Uploaded Papers</h3>
-
-        {submittedPapers.length === 0 ? (
-          <p className="text-gray-500 italic">No papers uploaded yet.</p>
-        ) : (
-          <div className="grid gap-4">
-            {submittedPapers.map((paper, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-lg shadow p-4">
-                <h4 className="text-lg font-semibold text-blue-700 mb-2">{paper.subject}</h4>
-                {paper.questions.map((q, qIdx) => (
-                  <div key={qIdx} className="mb-2">
-                    <p className="text-gray-800">
-                      <span className="font-medium">Q{qIdx + 1}:</span> {q.question} ({q.marks} marks)
-                    </p>
-                    {q.type === 'mcq' && (
-                      <ul className="list-disc ml-6 text-sm text-gray-600">
-                        {q.options.map((opt, oIdx) => (
-                          <li key={oIdx}>➤ {opt}</li>
-                        ))}
-                      </ul>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                <AnimatePresence mode="wait">
+                    {step === 1 && (
+                        <motion.div key="step1" initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }}>
+                            <ExamDetailsForm details={examDetails} handleChange={handleDetailChange} nextStep={() => setStep(2)} />
+                        </motion.div>
                     )}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+                    {step === 2 && (
+                        <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}>
+                            <QuestionBuilder questions={questions} addQuestion={addQuestion} handleQuestionChange={handleQuestionChange} handleOptionChange={handleOptionChange} removeQuestion={removeQuestion} prevStep={() => setStep(1)} handleSubmit={handleSubmit} loading={loading} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+                {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+                {success && <p className="text-green-500 text-sm mt-4 text-center">{success}</p>}
+            </div>
+        </div>
+    );
 };
+
+const ExamDetailsForm = ({ details, handleChange, nextStep }) => (
+    <div className="space-y-6">
+        <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-full"><Settings size={20}/></div>
+            <h3 className="text-xl font-bold text-gray-700">Exam Details</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InputField label="Exam Title" name="title" value={details.title} onChange={handleChange} required />
+            <InputField label="Department" name="department" value={details.department} onChange={handleChange} as="select">
+                <option>Computer Science</option><option>Information Technology</option><option>Electronics</option>
+            </InputField>
+            <InputField label="Year" name="year" value={details.year} onChange={handleChange} as="select">
+                <option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option>
+            </InputField>
+            <InputField label="Semester" name="semester" value={details.semester} onChange={handleChange} as="select">
+                {[...Array(8).keys()].map(i => <option key={i+1} value={i+1}>Semester {i+1}</option>)}
+            </InputField>
+            <InputField label="Section" name="section" value={details.section} onChange={handleChange} required />
+            <InputField label="Batch" name="batch" value={details.batch} onChange={handleChange} placeholder="e.g., 2024-2028" required />
+            <InputField label="Duration (Minutes)" name="durationMinutes" type="number" value={details.durationMinutes} onChange={handleChange} required />
+            <InputField label="Date" name="date" type="date" value={details.date} onChange={handleChange} required />
+            <div className="grid grid-cols-2 gap-4">
+                <InputField label="Start Time" name="startTime" type="time" value={details.startTime} onChange={handleChange} required />
+                <InputField label="End Time" name="endTime" type="time" value={details.endTime} onChange={handleChange} required />
+            </div>
+        </div>
+        <div className="flex justify-end pt-4">
+            <button onClick={nextStep} className="flex items-center gap-2 px-6 py-2 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition shadow-md">
+                Add Questions <ChevronRight size={18} />
+            </button>
+        </div>
+    </div>
+);
+
+const QuestionBuilder = ({ questions, addQuestion, handleQuestionChange, handleOptionChange, removeQuestion, prevStep, handleSubmit, loading }) => (
+    <div className="space-y-6">
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-full"><ListPlus size={20}/></div>
+                <h3 className="text-xl font-bold text-gray-700">Build Questions</h3>
+            </div>
+            <button onClick={addQuestion} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition">
+                <Plus size={16} /> Add Question
+            </button>
+        </div>
+        <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+            {questions.length > 0 ? questions.map((q, i) => (
+                <QuestionCard key={i} index={i} question={q} handleChange={handleQuestionChange} handleOptionChange={handleOptionChange} remove={removeQuestion} />
+            )) : <p className="text-center text-gray-500 py-8">No questions added yet. Click "Add Question" to start.</p>}
+        </div>
+        <div className="flex justify-between pt-6 border-t">
+            <button onClick={prevStep} className="flex items-center gap-2 px-6 py-2 font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                <ChevronLeft size={18} /> Back to Details
+            </button>
+            <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 px-6 py-2 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition shadow-md disabled:bg-gray-400">
+                <CheckCircle size={18} /> {loading ? 'Creating...' : 'Create Exam'}
+            </button>
+        </div>
+    </div>
+);
+
+const QuestionCard = ({ index, question, handleChange, handleOptionChange, remove }) => (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+        <div className="flex justify-between items-center">
+            <p className="font-bold text-gray-600">Question {index + 1}</p>
+            <button onClick={() => remove(index)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+            <InputField label="Type" name="type" value={question.type} onChange={(e) => handleChange(index, 'type', e.target.value)} as="select">
+                <option>Subjective</option><option>MCQ</option>
+            </InputField>
+            <InputField label="Marks" name="marks" type="number" value={question.marks} onChange={(e) => handleChange(index, 'marks', e.target.value)} />
+        </div>
+        <InputField label="Question Text" name="text" value={question.text} onChange={(e) => handleChange(index, 'text', e.target.value)} as="textarea" required />
+        
+        {question.type === 'Subjective' && (
+            <InputField 
+                label="Model Answer (Optional)" 
+                name="modelAnswer" 
+                value={question.modelAnswer} 
+                onChange={(e) => handleChange(index, 'modelAnswer', e.target.value)} 
+                as="textarea" 
+                placeholder="Provide an ideal answer to guide the AI, or leave blank for general evaluation." 
+            />
+        )}
+        
+        {question.type === 'MCQ' && (
+            <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-600">Options (Select the correct one)</label>
+                {question.options.slice(0, 4).map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                        <input type="radio" name={`correct-opt-${index}`} checked={opt.isCorrect} onChange={(e) => handleOptionChange(index, i, 'isCorrect', e.target.checked)} />
+                        <input type="text" value={opt.text} onChange={(e) => handleOptionChange(index, i, 'text', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder={`Option ${i+1}`} required />
+                    </div>
+                ))}
+            </div>
+        )}
+    </motion.div>
+);
+
+const InputField = ({ label, name, as = 'input', children, ...props }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+        {as === 'select' ? (
+            <select name={name} {...props} className="w-full p-2 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500">
+                {children}
+            </select>
+        ) : as === 'textarea' ? (
+            <textarea name={name} {...props} rows="3" className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500" />
+        ) : (
+            <input name={name} {...props} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500" />
+        )}
+    </div>
+);
 
 export default TeacherExam;

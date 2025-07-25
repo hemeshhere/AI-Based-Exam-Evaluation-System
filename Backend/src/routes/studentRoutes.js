@@ -4,24 +4,24 @@ import * as studentController from '../controllers/studentController.js';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(verifyToken);
-router.use(authorize('student'));
+// Apply authentication and authorization to all student routes
+router.use(verifyToken, authorize('student'));
 
-// Get active exams for student
-router.get('/exams/active', studentController.getActiveExams);
-
+// Route to get the student's personalized timetable
 router.get('/timetable', studentController.getStudentTimetable);
 
-router.get('/exams/active', studentController.getActiveExams);
+// ✅ UPDATED: This route now correctly points to the new function to get all of today's exams
+router.get('/exams/active', studentController.getTodaysExams);
 
-// Start an exam
+// Route to start an exam (requires examId in params and accessCode in body)
 router.post('/exams/:examId/start', studentController.startExam);
 
-// Submit exam answers
+// Route to submit answers for an ongoing exam
 router.put('/submissions/:submissionId/submit', studentController.submitExam);
 
-// Get exam result
+// Route to get the result of a submitted exam
 router.get('/results/:submissionId', studentController.getExamResult);
+
+router.get('/results', studentController.getStudentResults);
 
 export default router;

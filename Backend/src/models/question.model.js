@@ -11,7 +11,7 @@ const optionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   }
-}, { _id: false });
+}, { _id: true });
 
 const questionSchema = new mongoose.Schema({
   exam: {
@@ -28,7 +28,14 @@ const questionSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    maxlength: 1000
+    maxlength: 2000
+  },
+  // ✅ MODIFIED: modelAnswer is now optional
+  modelAnswer: {
+    type: String,
+    trim: true,
+    default: '', // Default to an empty string
+    maxlength: 5000
   },
   options: {
     type: [optionSchema],
@@ -48,19 +55,8 @@ const questionSchema = new mongoose.Schema({
     min: 1,
     max: 100
   },
-  difficulty: {
-    type: String,
-    enum: ['Easy', 'Medium', 'Hard'],
-    default: 'Medium'
-  },
-  topic: {
-    type: String,
-    trim: true,
-    maxlength: 100
-  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    // ✅ FIXED: Changed ref from 'User' to 'Teacher'
     ref: 'Teacher',
     required: true
   }
