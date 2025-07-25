@@ -125,22 +125,22 @@ const teacherSchema = new mongoose.Schema(
     address: {
       street: {
         type: String,
-        required: [true, 'Street address is required'],
+        required: [false, 'Street address is required'],
         trim: true,
       },
       city: {
         type: String,
-        required: [true, 'City is required'],
+        required: [false, 'City is required'],
         trim: true,
       },
       state: {
         type: String,
-        required: [true, 'State is required'],
+        required: [false, 'State is required'],
         trim: true,
       },
       postalCode: {
         type: String,
-        required: [true, 'Postal code is required'],
+        required: [false, 'Postal code is required'],
         trim: true,
         validate: {
           validator: function (v) {
@@ -151,7 +151,7 @@ const teacherSchema = new mongoose.Schema(
       },
       country: {
         type: String,
-        required: [true, 'Country is required'],
+        required: [false, 'Country is required'],
         trim: true,
         default: 'India',
       },
