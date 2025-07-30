@@ -68,8 +68,8 @@ export default function TeacherLogin() {
               <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
               <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
               <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
-              <input type="password" name="password" placeholder="Create Password" value={formData.password} onChange={handleChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
-              <input type="text" name="employeeID" placeholder="Employee ID" value={formData.employeeID} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="password" name="password" placeholder="Create Password (min. 8 characters)" value={formData.password} onChange={handleChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="employeeID" placeholder="Employee ID (e.g., T-12345)" value={formData.employeeID} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
               <select name="title" value={formData.title} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400 bg-white">
                   <option value="">Select Title...</option>
                   <option value="Assistant Professor">Assistant Professor</option>
@@ -85,7 +85,7 @@ export default function TeacherLogin() {
                   {/* Add other departments */}
               </select>
               <input type="number" name="experienceYears" placeholder="Years of Experience" value={formData.experienceYears} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
-              <input type="text" name="specialization" placeholder="Specializations (comma-separated)" onChange={handleSpecializationChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="specialization" placeholder="Specializations (e.g., AI, Data Science)" onChange={handleSpecializationChange} required className="col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
               <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400" />
               <select name="gender" value={formData.gender} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-400 bg-white">
                   <option value="">Select Gender...</option>

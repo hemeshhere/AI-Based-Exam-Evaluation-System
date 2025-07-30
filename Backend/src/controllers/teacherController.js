@@ -11,15 +11,25 @@ export const createExamWithQuestions = asyncHandler(async (req, res) => {
     if (!examDetails || !questions || !Array.isArray(questions) || questions.length === 0) {
         throw new ApiError(400, 'Exam details and at least one question are required.');
     }
+
     const newExam = await Exam.create({ ...examDetails, createdBy: req.user._id });
+    
     const questionDocs = questions.map(q => ({ ...q, exam: newExam._id, createdBy: req.user._id }));
     const createdQuestions = await Question.insertMany(questionDocs);
+
+    // ✅ ADDED: Calculate the total marks by summing up marks from all questions.
+    const totalMarks = questions.reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
+
+    // ✅ MODIFIED: Update the exam with the question IDs and the calculated total marks.
     newExam.questions = createdQuestions.map(q => q._id);
+    newExam.totalMarks = totalMarks;
     await newExam.save();
+
     const populatedExam = await Exam.findById(newExam._id).populate('questions');
     return new ApiResponse(res).success(201, populatedExam, 'Exam created successfully');
 });
 
+// ... (the rest of your teacherController.js file remains the same)
 export const getTeacherExams = asyncHandler(async (req, res) => {
     const exams = await Exam.find({ createdBy: req.user._id }).select('-questions').sort({ createdAt: -1 });
     return new ApiResponse(res).success(200, exams, 'Exams fetched successfully');
@@ -65,7 +75,6 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Submission ID and Question ID are required.');
     }
 
-    // Correctly populate the submission with its exam and the exam's questions
     const submission = await Submission.findById(submissionId).populate({
         path: 'exam',
         populate: {
@@ -86,7 +95,6 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
     
     const studentAnswerText = studentAnswerObject.response;
 
-    // --- Prompt Engineering ---
     let prompt;
     const hasModelAnswer = question.modelAnswer && question.modelAnswer.trim() !== '';
     const outputFormat = 'Provide your response in a strict JSON format with two keys: "marks" (a number out of ' + question.marks + ') and "feedback" (a string in markdown format explaining the evaluation).';
@@ -97,7 +105,6 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
         prompt = `You are an expert examiner. The question is worth ${question.marks} marks. The Question is: "${question.text}". The Student's Answer is: "${studentAnswerText}". Based on your expert knowledge, evaluate the student's answer. ${outputFormat}`;
     }
 
-    // --- Gemini API Call ---
     let aiResponse;
     try {
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -143,11 +150,9 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Failed to get a response from the AI evaluation service.");
     }
 
-    // --- Update Database ---
     studentAnswerObject.marksAwarded = aiResponse.marks;
     studentAnswerObject.feedback = aiResponse.feedback;
 
-    // Recalculate total marks for the submission
     submission.totalMarks = submission.answers.reduce((total, ans) => {
         return total + (ans.marksAwarded || 0);
     }, 0);
@@ -183,3 +188,33 @@ export const publishResults = asyncHandler(async (req, res) => {
 
     return new ApiResponse(res).success(200, { modifiedCount: result.modifiedCount }, `${result.modifiedCount} result(s) published successfully.`);
 });
+
+
+// ✅ NEW FUNCTION: To create a timetable entry without questions
+export const createTimetableEntry = asyncHandler(async (req, res) => {
+    const { title, description, department, year, semester, section, batch, date, startTime, endTime, durationMinutes } = req.body;
+
+    const requiredFields = ['title', 'department', 'year', 'semester', 'section', 'batch', 'date', 'startTime', 'endTime', 'durationMinutes'];
+    for (const field of requiredFields) {
+        if (!req.body[field]) {
+            throw new ApiError(400, `${field} is required.`);
+        }
+    }
+
+    const examData = {
+        ...req.body,
+        createdBy: req.user._id,
+        // Ensure this entry is treated as a schedule, not a draft exam
+        status: 'scheduled', 
+        questions: [], // No questions for a simple timetable entry
+        totalMarks: 0, // No marks
+    };
+
+    const newEntry = await Exam.create(examData);
+
+    return new ApiResponse(res).success(201, newEntry, 'Timetable entry created successfully.');
+});
+
+
+
+

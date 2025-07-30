@@ -46,16 +46,7 @@ const TeacherEvaluation = () => {
         }
     };
 
-    const handleDelete = async () => {
-        if (!examToDelete) return;
-        try {
-            await deleteExam(examToDelete._id);
-            setExams(prev => prev.filter(exam => exam._id !== examToDelete._id));
-            setExamToDelete(null);
-        } catch (err) {
-            setError('Failed to delete exam.');
-        }
-    };
+    
 
     // --- Navigation Functions ---
     const handleViewSubmissions = (exam) => {
@@ -149,7 +140,7 @@ const ExamList = ({ exams, onView, onDelete, onPublish, error, success }) => {
                                 <button onClick={() => onView(exam)} className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
                                     View Submissions <ChevronRight size={16} />
                                 </button>
-                                <button onClick={() => onDelete(exam)} className="p-2 text-gray-400 hover:text-red-500 rounded-full transition-colors"><Trash2 size={18} /></button>
+                                
                             </div>
                         </div>
                     ))}

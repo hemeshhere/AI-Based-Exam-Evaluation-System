@@ -64,10 +64,12 @@ export const replyToIssue = async (issueId, replyText) => {
 };
 
 export const createTimetableEntry = async (entryData) => {
-  // We use the 'teacher/exams' route which is protected
-  const response = await apiClient.post('/api/v1/teacher/exams', entryData);
+  // Use the new '/teacher/timetable' route
+  const response = await apiClient.post('/api/v1/teacher/timetable', entryData);
   return response.data;
 };
+
+
 
 // This function is for the STUDENT to fetch their timetable
 export const getStudentTimetable = async () => {
@@ -80,6 +82,7 @@ export const createExamWithQuestions = async (examData) => {
   const response = await apiClient.post('/api/v1/teacher/exams', examData);
   return response.data;
 };
+
 export const getTeacherExams = async () => {
   const response = await apiClient.get('/api/v1/teacher/exams');
   return response.data;
@@ -113,6 +116,12 @@ export const submitExam = async (submissionId, answers) => {
   return response.data;
 };
 
+// ✅ ADD THIS NEW FUNCTION
+export const getSubmissionById = async (submissionId) => {
+  const response = await apiClient.get(`/api/v1/student/submissions/session/${submissionId}`);
+  return response.data;
+};
+
 
 export const getExamSubmissions = async (examId) => {
   const response = await apiClient.get(`/api/v1/teacher/exams/${examId}/submissions`);
@@ -132,5 +141,38 @@ export const publishResults = async (examId) => {
 
 export const getStudentResults = async () => {
   const response = await apiClient.get('/api/v1/student/results');
+  return response.data;
+};
+
+
+export const getDashboardStats = async () => {
+  const response = await apiClient.get('/api/v1/dashboard/stats');
+  return response.data;
+};
+
+export const getRecentActivity = async () => {
+  const response = await apiClient.get('/api/v1/dashboard/activity');
+  return response.data;
+};
+
+// --- To-Do List Services ---
+
+export const getTodos = async () => {
+  const response = await apiClient.get('/api/v1/dashboard/todos');
+  return response.data;
+};
+
+export const addTodo = async (text) => {
+  const response = await apiClient.post('/api/v1/dashboard/todos', { text });
+  return response.data;
+};
+
+export const toggleTodo = async (todoId) => {
+  const response = await apiClient.patch(`/api/v1/dashboard/todos/${todoId}`);
+  return response.data;
+};
+
+export const deleteTodo = async (todoId) => {
+  const response = await apiClient.delete(`/api/v1/dashboard/todos/${todoId}`);
   return response.data;
 };

@@ -33,7 +33,9 @@ router.delete('/exams/:examId', teacherController.deleteExam);
 
 router.post('/exams/:examId/publish-results', teacherController.publishResults);
 
-;
+
+
+router.post('/timetable', teacherController.createTimetableEntry);
 
 
 export default router;

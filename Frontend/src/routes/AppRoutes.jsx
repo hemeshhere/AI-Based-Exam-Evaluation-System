@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx'; // ✅ Import the useAuth hook
+import { useAuth } from '../context/AuthContext.jsx';
 
 // Import Components and Pages
 import RoleSelector from '../components/RoleSelector';
@@ -9,6 +9,9 @@ import TeacherLogin from '../components/TeacherLogin.jsx';
 import StudentDashboard from '../pages/StudentDashboard.jsx';
 import TeacherDashboard from '../pages/TeacherDashboard.jsx';
 import Login from '../components/Login.jsx';
+// ✅ ADDED: Import the ExamTaker component
+import { ExamTaker } from '../pages/StudentExam.jsx';
+
 
 // A component to protect routes
 const ProtectedRoute = ({ children, role }) => {
@@ -21,27 +24,27 @@ const ProtectedRoute = ({ children, role }) => {
 };
 
 export default function AppRoutes() {
-  const { isAuthenticated, user } = useAuth(); // ✅ Get user state from context
+  const { isAuthenticated, user } = useAuth(); // Get user state from context
 
   return (
     <Routes>
       {/* --- Public Routes --- */}
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          !isAuthenticated ? <RoleSelector /> : 
+          !isAuthenticated ? <RoleSelector /> :
           <Navigate to={user.role === 'student' ? '/student-dashboard' : '/teacher-dashboard'} replace />
         }
       />
-      <Route 
-        path="/student-login" 
+      <Route
+        path="/student-login"
         element={!isAuthenticated ? <StudentLogin /> : <Navigate to="/student-dashboard" replace />}
       />
-      <Route 
-        path="/teacher-login" 
+      <Route
+        path="/teacher-login"
         element={!isAuthenticated ? <TeacherLogin /> : <Navigate to="/teacher-dashboard" replace />}
       />
-      
+
       {/* The generic /login route can now be a modal triggered from RoleSelector */}
       {/* For simplicity, we'll keep the separate student/teacher login pages */}
       <Route path="/login" element={<Login />} />
@@ -60,6 +63,18 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute role="teacher">
             <TeacherDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ✅ ADDED: This is the new dedicated route for taking an exam. */}
+      <Route
+        path="/exam/:submissionId"
+        element={
+          <ProtectedRoute role="student">
+            <div className="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+              <ExamTaker />
+            </div>
           </ProtectedRoute>
         }
       />

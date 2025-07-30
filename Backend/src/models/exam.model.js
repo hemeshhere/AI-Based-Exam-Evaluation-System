@@ -10,6 +10,8 @@ const examSchema = new mongoose.Schema({
   accessCode: { type: String, trim: true, unique: true, validate: { validator: (v) => v.length === 6, message: 'Access code must be 6 characters.' } },
   endTime: { type: Date, required: true },
   durationMinutes: { type: Number, required: true, min: 1 },
+  // ✅ ADDED: A field to store the total possible marks for the exam.
+  totalMarks: { type: Number, required: true, default: 0 },
   year: { type: String, required: true, enum: ['1', '2', '3', '4'] },
   semester: { type: String, required: true, enum: ['1', '2', '3', '4', '5', '6', '7', '8'] },
   batch: { type: String, required: true, trim: true },
@@ -32,24 +34,20 @@ examSchema.pre('save', async function(next) {
   next();
 });
 
-// ✅ MODIFIED: The canAccess method is now more robust and case-insensitive
 examSchema.methods.canAccess = async function(student, providedAccessCode) {
   if (!student) return false;
   
-  // 1. Check if access code matches (case-insensitive)
   if (this.accessCode.toLowerCase() !== providedAccessCode.toLowerCase()) {
       console.log("Access denied: Incorrect access code.");
       return false;
   }
   
-  // 2. Check if current time is within exam window
   const now = new Date();
   if (now < this.startTime || now > this.endTime) {
       console.log("Access denied: Exam is not currently active.");
       return false;
   }
   
-  // 3. Make class checks flexible and case-insensitive
   if (student.section.toLowerCase() !== this.section.toLowerCase() || 
       student.department.toLowerCase() !== this.department.toLowerCase() || 
       student.year !== this.year) {
@@ -57,7 +55,6 @@ examSchema.methods.canAccess = async function(student, providedAccessCode) {
       return false;
   }
   
-  // If all checks pass, grant access
   return true;
 };
 

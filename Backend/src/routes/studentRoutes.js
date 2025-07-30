@@ -19,6 +19,8 @@ router.post('/exams/:examId/start', studentController.startExam);
 // Route to submit answers for an ongoing exam
 router.put('/submissions/:submissionId/submit', studentController.submitExam);
 
+router.get('/submissions/session/:submissionId', studentController.getSubmissionById);
+
 // Route to get the result of a submitted exam
 router.get('/results/:submissionId', studentController.getExamResult);
 

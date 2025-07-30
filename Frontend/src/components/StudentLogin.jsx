@@ -151,12 +151,12 @@ const SignupForm = () => {
                         {/* Personal Info */}
                         <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
                         <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
-                        <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required className="md:col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
-                        <input type="password" name="password" placeholder="Create Password (min 8 characters)" value={formData.password} onChange={handleChange} required className="md:col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
+                        <input type="email" name="email" placeholder="University Email Address" value={formData.email} onChange={handleChange} required className="md:col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
+                        <input type="password" name="password" placeholder="Create Password (min. 8 characters)" value={formData.password} onChange={handleChange} required className="md:col-span-2 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
                         
                         {/* Academic Info */}
-                        <input type="text" name="rollNumber" placeholder="Roll Number" value={formData.rollNumber} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
-                        <input type="text" name="registrationID" placeholder="Registration ID" value={formData.registrationID} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
+                        <input type="text" name="rollNumber" placeholder="University Roll Number" value={formData.rollNumber} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
+                        <input type="text" name="registrationID" placeholder="Unique Registration ID" value={formData.registrationID} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
                         <select name="department" value={formData.department} onChange={handleChange} className="border border-gray-300 p-3 rounded-lg bg-white focus:ring-2 focus:ring-indigo-400">
                             <option value="Computer Science">Computer Science</option>
                             <option value="Information Technology">Information Technology</option>
@@ -182,7 +182,7 @@ const SignupForm = () => {
                             <option value="7">Semester 7</option>
                             <option value="8">Semester 8</option>
                         </select>
-                        <input type="text" name="section" placeholder="Section (e.g., A)" value={formData.section} onChange={handleChange} required maxLength="1" className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
+                        <input type="text" name="section" placeholder="Section (e.g., A, B)" value={formData.section} onChange={handleChange} required maxLength="1" className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>
 
                         {/* Contact & Other Info */}
                         <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} required className="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"/>

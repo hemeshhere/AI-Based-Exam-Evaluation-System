@@ -53,6 +53,7 @@ export default function TeacherDashboard() {
         }
     };
 
+
     // Sidebar Component for better organization
     const Sidebar = () => (
         <aside 
@@ -119,7 +120,12 @@ export default function TeacherDashboard() {
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <ActiveComponent />
+                           {/* Pass handleTabClick to the active component if it's the dashboard */}
+                           {activeTab === 'dashboard' ? (
+                                <ActiveComponent setActiveTab={handleTabClick} />
+                            ) : (
+                                <ActiveComponent />
+                            )}
                         </motion.div>
                     </AnimatePresence>
                 </main>

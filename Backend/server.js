@@ -8,6 +8,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import studentRoutes from './src/routes/studentRoutes.js';
 import teacherRoutes from './src/routes/teacherRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
+import dashboardRoutes from './src/routes/dashboardRoutes.js';
 
 // Check for required environment variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
@@ -38,6 +39,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/issues', issueRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
