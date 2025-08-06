@@ -332,10 +332,6 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 - **Blockchain Verification**: Blockchain-based certificate verification
 - **Multi-language Support**: Internationalization for global usage
 
-## 📞 Support
-
-For support, email [your-email@example.com] or create an issue in the repository.
-
 ## 🙏 Acknowledgments
 
 - Thanks to all contributors who have helped shape this project
