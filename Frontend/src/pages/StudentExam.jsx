@@ -77,15 +77,12 @@ const ExamCard = ({ exam, onSelectExam }) => {
     const [timeLeft, setTimeLeft] = useState('');
 
     useEffect(() => {
+    // Convert UTC → Local once
+    const localStart = new Date(exam.startTime);
+    const localEnd = new Date(exam.endTime);
+
     const timer = setInterval(() => {
         const now = new Date();
-
-        // Convert UTC date coming from backend → Local time
-        const startTime = new Date(exam.startTime);
-        const endTime = new Date(exam.endTime);
-
-        const localStart = new Date(startTime.getTime());
-        const localEnd = new Date(endTime.getTime());
 
         if (now < localStart) {
             setStatus('upcoming');
