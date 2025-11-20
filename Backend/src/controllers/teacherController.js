@@ -45,7 +45,7 @@ export const getExamDetails = asyncHandler(async (req, res) => {
 export const deleteExam = asyncHandler(async (req, res) => {
     const { examId } = req.params;
     const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id });
-    if (!exam) throw new ApiError(404, 'Exam not found or you are not authorized.');
+    if (!exam) throw new ApiError(44, 'Exam not found or you are not authorized.');
     await Question.deleteMany({ exam: examId });
     await Exam.findByIdAndDelete(examId);
     return new ApiResponse(res).success(200, { deletedExamId: examId }, 'Exam deleted successfully.');
@@ -112,27 +112,53 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
             throw new ApiError(500, 'GEMINI_API_KEY is not configured on the server.');
         }
         
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-        
+        // ✅ FIX: Updated the model name from 'gemini-1.5-flash-latest' to 'gemini-2.5-flash'
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+                
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: prompt }]
+                    }
+                ]
+            })
         });
+
 
         if (!response.ok) {
             const errorBody = await response.text();
             console.error("Gemini API Error Response:", errorBody);
-            throw new ApiError(500, `Error from Gemini API: ${response.statusText}`);
+            // Try to parse the errorBody to see if it's the specific JSON error
+            try {
+                const errorJson = JSON.parse(errorBody);
+                if (errorJson.error && errorJson.error.message) {
+                    throw new ApiError(500, `Error from Gemini API: ${errorJson.error.message}`);
+                }
+            } catch (e) {
+                // If parsing fails, just use the raw text
+                throw new ApiError(500, `Error from Gemini API: ${response.statusText}. Response: ${errorBody}`);
+            }
         }
 
         const data = await response.json();
         
         if (!data.candidates || !data.candidates[0].content.parts[0].text) {
-            throw new ApiError(500, "Received an invalid response structure from Gemini API.");
+            console.warn("Gemini API Response Warning:", data);
+            throw new ApiError(500, "Received an invalid response structure from Gemini API. Check for safety blocks.");
         }
 
-        const rawText = data.candidates[0].content.parts[0].text;
+        const rawText =
+            data.candidates?.[0]?.content?.parts?.[0]?.text ||
+            data.candidates?.[0]?.content?.parts?.[0]?.generatedText;
+
+        if (!rawText) {
+            throw new ApiError(500, "Gemini returned no text. Possibly safety blocked.");
+        }
+
         
         try {
             const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -147,7 +173,10 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
 
     } catch (error) {
         console.error("Gemini API Call Error:", error);
-        throw new ApiError(500, "Failed to get a response from the AI evaluation service.");
+        if (error instanceof ApiError) {
+            throw error; // Re-throw ApiError directly
+        }
+        throw new ApiError(500, `Failed to get a response from the AI evaluation service: ${error.message}`);
     }
 
     studentAnswerObject.marksAwarded = aiResponse.marks;
@@ -207,14 +236,10 @@ export const createTimetableEntry = asyncHandler(async (req, res) => {
         // Ensure this entry is treated as a schedule, not a draft exam
         status: 'scheduled', 
         questions: [], // No questions for a simple timetable entry
-        totalMarks: 0, // No marks
+        totalMarks: 0, // No marks,
     };
 
     const newEntry = await Exam.create(examData);
 
     return new ApiResponse(res).success(201, newEntry, 'Timetable entry created successfully.');
 });
-
-
-
-

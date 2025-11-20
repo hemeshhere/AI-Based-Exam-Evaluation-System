@@ -25,32 +25,36 @@ const TeacherTimetable = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setError('');
+  setSuccess('');
 
-    // Basic validation
-    if (!form.title || !form.date || !form.startTime || !form.endTime) {
-      setError('Please fill all required fields.');
-      return;
-    }
+  if (!form.title || !form.date || !form.startTime || !form.endTime) {
+    setError('Please fill all required fields.');
+    return;
+  }
 
-    // Combine date and time for backend
-    const submissionData = {
-        ...form,
-        startTime: `${form.date}T${form.startTime}:00`,
-        endTime: `${form.date}T${form.endTime}:00`,
-    };
+  // ⭐ Convert to real JS dates (IST)
+  const localStart = new Date(`${form.date}T${form.startTime}:00`);
+  const localEnd = new Date(`${form.date}T${form.endTime}:00`);
+  const localDate = new Date(form.date);
 
-    try {
-      await createTimetableEntry(submissionData);
-      setSuccess(`Successfully scheduled "${form.title}" for section ${form.section}.`);
-      // Optionally reset form
-      // setForm({ ...initial state ... });
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create schedule.');
-    }
+  // ⭐ Convert to UTC before sending (always correct on Vercel)
+  const submissionData = {
+    ...form,
+    startTime: localStart.toISOString(),
+    endTime: localEnd.toISOString(),
+    date: localDate.toISOString(),
   };
+
+  try {
+    await createTimetableEntry(submissionData);
+    setSuccess(`Successfully scheduled "${form.title}" for section ${form.section}.`);
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to create schedule.');
+  }
+};
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">
