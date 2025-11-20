@@ -77,28 +77,41 @@ const ExamCard = ({ exam, onSelectExam }) => {
     const [timeLeft, setTimeLeft] = useState('');
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            const now = new Date();
-            const startTime = new Date(exam.startTime);
-            const endTime = new Date(exam.endTime);
+    const timer = setInterval(() => {
+        const now = new Date();
 
-            if (now < startTime) {
-                setStatus('upcoming');
-                const diff = startTime - now;
-                const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-                setTimeLeft(`${h}:${m}:${s}`);
-            } else if (now >= startTime && now <= endTime) {
-                setStatus('active');
-                setTimeLeft('');
-            } else {
-                setStatus('finished');
-                setTimeLeft('');
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [exam.startTime, exam.endTime]);
+        // Convert UTC date coming from backend → Local time
+        const startTime = new Date(exam.startTime);
+        const endTime = new Date(exam.endTime);
+
+        const localStart = new Date(startTime.getTime());
+        const localEnd = new Date(endTime.getTime());
+
+        if (now < localStart) {
+            setStatus('upcoming');
+            const diff = localStart - now;
+
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+
+            setTimeLeft(`${h}:${m}:${s}`);
+        }
+        else if (now >= localStart && now <= localEnd) {
+            setStatus('active');
+            setTimeLeft('');
+        }
+        else {
+            setStatus('finished');
+            setTimeLeft('');
+        }
+
+    }, 1000);
+
+    return () => clearInterval(timer);
+
+}, [exam.startTime, exam.endTime]);
+
 
     return (
         <div className={`bg-white rounded-xl shadow-lg p-5 flex items-center justify-between border border-gray-200 ${(status === 'finished' || exam.isSubmitted) && 'opacity-60'}`}>
