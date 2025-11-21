@@ -71,71 +71,97 @@ const ExamList = ({ exams, onSelectExam }) => (
 );
 
 // Individual card for each exam
-// ✅ MODIFIED: Individual card for each exam
 const ExamCard = ({ exam, onSelectExam }) => {
-    const [status, setStatus] = useState('upcoming');
-    const [timeLeft, setTimeLeft] = useState('');
+    const [status, setStatus] = useState("upcoming");
+    const [timeLeft, setTimeLeft] = useState("");
 
     useEffect(() => {
-    // Convert UTC → Local once
-    const localStart = new Date(exam.startTime);
-    const localEnd = new Date(exam.endTime);
+        // Convert UTC → Local once (best practice)
+        const localStart = new Date(exam.startTime);
+        const localEnd = new Date(exam.endTime);
 
-    const timer = setInterval(() => {
-        const now = new Date();
+        const timer = setInterval(() => {
+            const now = new Date();
 
-        if (now < localStart) {
-            setStatus('upcoming');
-            const diff = localStart - now;
+            if (now < localStart) {
+                setStatus("upcoming");
 
-            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+                const diff = localStart - now;
+                const h = Math.floor(diff / 3600000).toString().padStart(2, "0");
+                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, "0");
+                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, "0");
 
-            setTimeLeft(`${h}:${m}:${s}`);
-        }
-        else if (now >= localStart && now <= localEnd) {
-            setStatus('active');
-            setTimeLeft('');
-        }
-        else {
-            setStatus('finished');
-            setTimeLeft('');
-        }
+                setTimeLeft(`${h}:${m}:${s}`);
+            }
+            else if (now >= localStart && now <= localEnd) {
+                setStatus("active");
+                setTimeLeft("");
+            }
+            else {
+                setStatus("finished");
+                setTimeLeft("");
+            }
+        }, 1000);
 
-    }, 1000);
-
-    return () => clearInterval(timer);
-
-}, [exam.startTime, exam.endTime]);
-
+        return () => clearInterval(timer);
+    }, [exam.startTime, exam.endTime]);
 
     return (
-        <div className={`bg-white rounded-xl shadow-lg p-5 flex items-center justify-between border border-gray-200 ${(status === 'finished' || exam.isSubmitted) && 'opacity-60'}`}>
+        <div
+            className={`bg-white rounded-xl shadow p-5 flex justify-between items-center border 
+                ${(status === "finished" || exam.isSubmitted) ? "opacity-60" : ""}`}
+        >
             <div>
+                {/* Title */}
                 <p className="font-bold text-lg text-gray-800">{exam.title}</p>
-                <p className="text-sm text-gray-500">{exam.department}</p>
-            </div>
-            <div>
-                {/* ✅ MODIFIED: This logic now checks the `isSubmitted` flag first */}
+
+                {/* Time */}
+                <p className="text-sm text-gray-500">
+                    {new Date(exam.startTime).toLocaleString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    })}{" "}
+                    –{" "}
+                    {new Date(exam.endTime).toLocaleString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    })}
+                </p>
+
+                {/* Status Text */}
                 {exam.isSubmitted ? (
-                    <p className="px-5 py-2 font-semibold text-green-700 bg-green-100 rounded-lg">Submitted</p>
-                ) : status === 'upcoming' ? (
-                    <div className="text-center">
-                        <p className="font-bold text-indigo-600 text-lg">{timeLeft}</p>
-                        <p className="text-xs text-gray-500">Starts In</p>
-                    </div>
-                ) : status === 'active' ? (
-                    <button onClick={() => onSelectExam(exam)} className="px-5 py-2 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition shadow-md animate-pulse">
-                        Start Now
-                    </button>
-                ) : ( // This is the 'finished' state
-                    <p className="px-5 py-2 font-semibold text-gray-600 bg-gray-200 rounded-lg">Finished</p>
+                    <p className="text-green-700 font-semibold mt-1 bg-green-100 px-3 py-1 rounded-lg">
+                        Submitted
+                    </p>
+                ) : status === "upcoming" ? (
+                    <p className="text-indigo-600 font-bold mt-1">
+                        Starts in: {timeLeft}
+                    </p>
+                ) : status === "active" ? (
+                    <p className="text-green-600 font-semibold mt-1">Exam Live Now</p>
+                ) : (
+                    <p className="text-red-600 font-semibold mt-1">Exam Ended</p>
                 )}
             </div>
+
+            {/* Start Button */}
+            <button
+                disabled={exam.isSubmitted || status !== "active"}
+                onClick={() => onSelectExam(exam)}
+                className={`px-5 py-2 rounded-lg font-semibold transition 
+                    ${
+                        status === "active" && !exam.isSubmitted
+                            ? "bg-green-600 text-white hover:bg-green-700 animate-pulse shadow-md"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    }`}
+            >
+                {exam.isSubmitted ? "Submitted" : "Start"}
+            </button>
         </div>
     );
 };
+
+
 
 // Modal to enter the access code
 const AccessCodeModal = ({ exam, onClose, onStart }) => {
