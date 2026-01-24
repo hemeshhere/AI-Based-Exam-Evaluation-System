@@ -112,8 +112,8 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
             throw new ApiError(500, 'GEMINI_API_KEY is not configured on the server.');
         }
         
-        // ✅ FIX: Updated the model name from 'gemini-1.5-flash-latest' to 'gemini-2.5-flash'
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // FIXED THE MODEL
+        const API_URL =`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
                 
         const response = await fetch(API_URL, {
             method: 'POST',
