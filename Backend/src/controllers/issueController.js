@@ -13,23 +13,29 @@ export const createIssue = asyncHandler(async (req, res) => {
     if (!teacher) {
         throw new ApiError(404, 'Teacher with that email not found.');
     }
-    const issue = await Issue.create({ subject, description, student: req.user._id, teacher: teacher._id });
-    
-    // ✅ FIXED: Correct usage of ApiResponse
+    const issue = await Issue.create({ 
+        subject, 
+        description, 
+        student: req.user._id, 
+        teacher: teacher._id 
+    });
+
     return new ApiResponse(res).success(201, issue, 'Issue submitted successfully.');
 });
 
 export const getStudentIssues = asyncHandler(async (req, res) => {
-    const issues = await Issue.find({ student: req.user._id }).populate('teacher', 'firstName lastName email').sort({ createdAt: -1 });
+    const issues = await Issue.find({ 
+        student: req.user._id 
+    }).populate('teacher', 'firstName lastName email').sort({ createdAt: -1 });
     
-    // ✅ FIXED: Correct usage of ApiResponse
     return new ApiResponse(res).success(200, issues, 'Issues fetched successfully.');
 });
 
 export const getTeacherIssues = asyncHandler(async (req, res) => {
-    const issues = await Issue.find({ teacher: req.user._id }).populate('student', 'firstName lastName email rollNumber').sort({ createdAt: -1 });
+    const issues = await Issue.find({ 
+        teacher: req.user._id 
+    }).populate('student', 'firstName lastName email rollNumber').sort({ createdAt: -1 });
     
-    // ✅ FIXED: Correct usage of ApiResponse
     return new ApiResponse(res).success(200, issues, 'Issues fetched successfully.');
 });
 
@@ -38,7 +44,10 @@ export const replyToIssue = asyncHandler(async (req, res) => {
     if (!reply) throw new ApiError(400, 'Reply text is required.');
     
     const issue = await Issue.findById(req.params.id);
-    if (!issue) throw new ApiError(404, 'Issue not found.');
+    if (!issue){
+        throw new ApiError(404, 'Issue not found.');
+    } 
+        
     if (issue.teacher.toString() !== req.user._id.toString()) {
         throw new ApiError(403, 'You are not authorized to reply to this issue.');
     }
@@ -46,7 +55,5 @@ export const replyToIssue = asyncHandler(async (req, res) => {
     issue.reply = reply;
     issue.status = 'Resolved';
     await issue.save();
-    
-    // ✅ FIXED: Correct usage of ApiResponse
     return new ApiResponse(res).success(200, issue, 'Reply sent successfully.');
 });

@@ -1,26 +1,100 @@
 import mongoose from 'mongoose';
 
-const examSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true, maxlength: 100 },
-  description: { type: String, trim: true, maxlength: 500 },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', required: true },
-  isPublished: { type: Boolean, default: false },
-  date: { type: Date, required: true },
-  startTime: { type: Date, required: true },
-  accessCode: { type: String, trim: true, unique: true, validate: { validator: (v) => v.length === 6, message: 'Access code must be 6 characters.' } },
-  endTime: { type: Date, required: true },
-  durationMinutes: { type: Number, required: true, min: 1 },
-  // ✅ ADDED: A field to store the total possible marks for the exam.
-  totalMarks: { type: Number, required: true, default: 0 },
-  year: { type: String, required: true, enum: ['1', '2', '3', '4'] },
-  semester: { type: String, required: true, enum: ['1', '2', '3', '4', '5', '6', '7', '8'] },
-  batch: { type: String, required: true, trim: true },
-  section: { type: String, required: true, trim: true, uppercase: true },
-  department: { type: String, required: true, trim: true, enum: ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Aerospace', 'Biotechnology', 'Other'] },
-  questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
-  allowedRollNumbers: [{ type: String, trim: true, uppercase: true }],
-  status: { type: String, enum: ['draft', 'scheduled', 'active', 'completed'], default: 'draft' }
-}, { timestamps: true });
+const examSchema = new mongoose.Schema(
+  {
+    title: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      maxlength: 100 
+    },
+    description: { 
+      type: String, 
+      trim: true, 
+      maxlength: 500 
+    },
+    createdBy: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Teacher', 
+      required: true 
+    },
+    isPublished: { 
+      type: Boolean, 
+      default: false 
+    },
+    date: { 
+      type: Date, 
+      required: true 
+    },
+    startTime: { 
+      type: Date, 
+      required: true 
+    },
+    accessCode: { 
+      type: String, 
+      trim: true, 
+      unique: true, 
+      validate: { validator: (v) => v.length === 6, message: 'Access code must be 6 characters.' } 
+    },
+    endTime: { 
+      type: Date, 
+      required: true 
+    },
+    durationMinutes: { 
+      type: Number, 
+      required: true, 
+      min: 1 
+    },
+    totalMarks: { 
+      type: Number, 
+      required: true, 
+      default: 0 
+    },
+    year: { 
+      type: String,
+      required: true, 
+      enum: ['1', '2', '3', '4'] 
+    },
+    semester: { type: String, 
+      required: true, 
+      enum: ['1', '2', '3', '4', '5', '6', '7', '8'] 
+    },
+    batch: { 
+      type: String, 
+      required: true, 
+      trim: true 
+    },
+    section: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      uppercase: true 
+    },
+    department: { 
+      type: String, 
+      required: true, 
+      trim: true, 
+      enum: ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Civil', 'Electrical', 'Chemical', 'Aerospace', 'Biotechnology', 'Other'] 
+    },
+    questions: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Question' 
+    }],
+    allowedRollNumbers: [{ 
+      type: String, 
+      trim: true, 
+      uppercase: true 
+    }],
+    status: { 
+      type: String, 
+      enum: ['draft', 'scheduled', 'active', 'completed'], 
+      default: 'draft' 
+    }
+  }, 
+  { 
+    timestamps: true 
+  }
+);
 
 examSchema.pre('save', async function(next) {
   if (this.isNew && !this.accessCode) {
@@ -54,7 +128,7 @@ examSchema.methods.canAccess = async function(student, providedAccessCode) {
       console.log("Access denied: Student's class does not match exam's target class.");
       return false;
   }
-  
+
   return true;
 };
 

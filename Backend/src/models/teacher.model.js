@@ -4,7 +4,6 @@ import validator from 'validator';
 
 const teacherSchema = new mongoose.Schema(
   {
-    // Basic Information
     firstName: {
       type: String,
       required: [true, 'First name is required'],
@@ -31,10 +30,8 @@ const teacherSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: [8, 'Password must be at least 8 characters long'],
-      select: false, // Don't include password in queries by default
+      select: false, 
     },
-
-    // Professional Information
     employeeID: {
       type: String,
       required: [true, 'Employee ID is required'],
@@ -100,8 +97,6 @@ const teacherSchema = new mongoose.Schema(
         message: 'At least one specialization must be provided'
       }
     },
-
-    // Contact Information
     phoneNumber: {
       type: String,
       required: [true, 'Phone number is required'],
@@ -112,8 +107,6 @@ const teacherSchema = new mongoose.Schema(
         message: 'Please provide a valid phone number',
       },
     },
-
-    // Personal Information
     gender: {
       type: String,
       required: [true, 'Gender is required'],
@@ -156,16 +149,12 @@ const teacherSchema = new mongoose.Schema(
         default: 'India',
       },
     },
-
-    // Professional Details
     experienceYears: {
       type: Number,
       required: [true, 'Years of experience is required'],
       min: [0, 'Experience cannot be negative'],
       max: [50, 'Experience cannot exceed 50 years'],
     },
-
-    // Academic Relationships
     courses: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -199,8 +188,6 @@ const teacherSchema = new mongoose.Schema(
         },
       },
     ],
-
-    // System Fields
     profilePicture: {
       type: String,
       default: null,

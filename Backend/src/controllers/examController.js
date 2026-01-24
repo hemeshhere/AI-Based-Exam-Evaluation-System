@@ -16,7 +16,7 @@ export const createExam = asyncHandler(async (req, res) => {
     throw ApiError.BadRequest(`Missing required fields: ${missingFields.join(', ')}`);
   }
 
-  // Convert incoming ISO strings to real JS Date objects
+  // ISSUE HERE!!!!!
   const startTime = new Date(req.body.startTime);
   const endTime = new Date(req.body.endTime);
   const date = new Date(req.body.date);

@@ -1,9 +1,10 @@
 const asyncHandler = (fn) => {
+
     if (typeof fn !== 'function') {
 		throw new TypeError('asyncHandler requires a function argument');
 	}
-
 	return (req, res, next) => {
+
 		// Create a safe execution context
 		const executionPromise = Promise.resolve(fn(req, res, next));
 

@@ -1,10 +1,5 @@
 import express from 'express';
-import { 
-  registerStudent,
-  registerTeacher,
-  login, 
-  getMe 
-} from '../controllers/authController.js';
+import { registerStudent, registerTeacher, login, getMe } from '../controllers/authController.js';
 import { verifyToken } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();

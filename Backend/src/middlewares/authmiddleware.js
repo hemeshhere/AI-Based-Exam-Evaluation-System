@@ -33,9 +33,7 @@ export const authorize = (...roles) => {
 
     // Normalize roles for case-insensitive comparison
     const userRole = req.user.role?.toLowerCase();
-    const hasPermission = roles.some(role => 
-      role.toLowerCase() === userRole
-    );
+    const hasPermission = roles.some( role => role.toLowerCase() === userRole );
 
     if (!hasPermission) {
       console.error(`Access denied. User role: ${userRole}, Required: ${roles.join(', ')}`);
@@ -53,9 +51,6 @@ export const authorize = (...roles) => {
     next();
   };
 };
-
-// Middleware to verify JWT and attach user info
-// In authmiddleware.js, update the verifyToken function:
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -80,11 +75,11 @@ export const verifyToken = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Get user from database
       let user = null;
       if (decoded.role === ROLES.STUDENT) {
         user = await Student.findById(decoded.id);
-      } else if (decoded.role === ROLES.TEACHER) {
+      } 
+      else if (decoded.role === ROLES.TEACHER) {
         user = await Teacher.findById(decoded.id);
       }
 
@@ -95,20 +90,21 @@ export const verifyToken = async (req, res, next) => {
         });
       }
 
-      // Attach user with role to request
       req.user = {
         ...user.toObject(),
         role: decoded.role
       };
 
       next();
-    } catch (error) {
+    } 
+    catch (error) {
       return res.status(401).json({
         success: false,
         message: 'Invalid or expired token'
       });
     }
-  } catch (error) {
+  } 
+  catch (error) {
     return res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -151,7 +147,8 @@ export const isOwner = (model, idField = '_id') => {
 
       req.doc = doc;
       next();
-    } catch (error) {
+    } 
+    catch (error) {
       next(error);
     }
   };

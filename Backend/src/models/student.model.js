@@ -30,16 +30,14 @@ const studentSchema = new mongoose.Schema(
 			type: String,
 			required: [true, 'Password is required'],
 			minlength: [8, 'Password must be at least 8 characters long'],
-			select: false, // Don't include password in queries by default
+			select: false,
 		},
-
-    // Unique registration ID for the student
-    registrationID: {
-      type: String,
-      required: [true, 'Registration ID is required'],
-      unique: true,
-      trim: true,
-    },
+		registrationID: {
+			type: String,
+			required: [true, 'Registration ID is required'],
+			unique: true,
+			trim: true,
+		},
 		rollNumber: {
 			type: String,
 			required: [true, 'Roll number is required'],
@@ -64,7 +62,6 @@ const studentSchema = new mongoose.Schema(
 				message: 'Please provide a valid phone number',
 			},
 		},
-
 		gender: {
 			type: String,
 			required: [true, 'Gender is required'],
@@ -161,14 +158,12 @@ const studentSchema = new mongoose.Schema(
 				ref: 'Course',
 			},
 		],
-    gpa: {
-      type: Number,
-      min: [0, 'GPA cannot be negative'],
-      max: [10, 'GPA cannot exceed 10'],
-      default: 0,
-    },
-
-    // Profile picture URL
+		gpa: {
+		type: Number,
+		min: [0, 'GPA cannot be negative'],
+		max: [10, 'GPA cannot exceed 10'],
+		default: 0,
+		},
 		profilePicture: {
 			type: String,
 			default: null,

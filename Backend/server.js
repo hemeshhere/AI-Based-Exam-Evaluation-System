@@ -10,27 +10,26 @@ import teacherRoutes from './src/routes/teacherRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
 
-// Check for required environment variables
+// Checks req. env variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
 const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-
 if (missingVars.length > 0) {
-  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
   process.exit(1);
 }
 
-// Initialize Express app
+//Initialization
 const app = express();
 
-// Middleware
+//Middlewares
 app.use(express.json());
 app.use(cors());
 
-// Log environment status
+// Environment status-
 console.log('Environment variables loaded:');
 console.log(`- NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? '✅ Set' : '❌ Missing'}`);
-console.log(`- MONGO_URI: ${process.env.MONGO_URI ? '✅ Set' : '❌ Missing'}`);
+console.log(`- JWT_SECRET: ${process.env.JWT_SECRET ? ' Set' : 'Missing'}`);
+console.log(`- MONGO_URI: ${process.env.MONGO_URI ? 'Set' : 'Missing'}`);
 
 // Routes
 app.use('/api/v1/exam', examRoutes);
@@ -52,40 +51,51 @@ app.get('/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map(val => val.message);
-    return res.status(400).json({ success: false, message: 'Validation Error', errors: messages });
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Validation Error', 
+      errors: messages 
+    });
   }
   
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     const value = err.keyValue[field];
-    return res.status(400).json({ success: false, message: `${field} '${value}' is already in use`, field: field });
+    return res.status(400).json({ 
+      success: false, 
+      message: `${field} '${value}' is already in use`, 
+      field: field 
+    });
   }
   
   if (err.statusCode) {
-    return res.status(err.statusCode).json({ success: false, message: err.message, ...(err.errors && { errors: err.errors }) });
+    return res.status(err.statusCode).json({ 
+      success: false, 
+      message: err.message, 
+      ...(err.errors && { errors: err.errors }) 
+    });
   }
   
-  res.status(500).json({ success: false, message: 'Internal server error', error: process.env.NODE_ENV === 'development' ? err.message : undefined });
+  res.status(500).json({ 
+    success: false,
+    message: 'Internal server error', 
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined 
+  });
 });
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected ✅');
-    
-    // Start the server only after database connection is established
+mongoose.connect(process.env.MONGO_URI).then(() => {
+    console.log('MongoDB connected');
+    // Starts the server only after DB connection is established
     const PORT = process.env.PORT || 3003;
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} 🚀`);
+      console.log(`Server running on port ${PORT} `);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+  }).catch((err) => {
+    console.error('MongoDB connection error:', err.message);
     process.exit(1);
   });
-
-// ✅ REMOVED: The duplicate global error handler and server start block were here.

@@ -1,8 +1,10 @@
 class ApiResponse {
+
     constructor(res) {
         this.res = res;
     }
 
+    // Success
     success(statusCode, data, message = 'Success') {
         this.res.status(statusCode).json({
             status: 'success',
@@ -11,6 +13,7 @@ class ApiResponse {
         });
     }
 
+    // Error
     error(error) {
         this.res.status(error.statusCode || 500).json({
             status: 'error',

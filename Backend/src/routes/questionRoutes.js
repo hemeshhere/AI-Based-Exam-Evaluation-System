@@ -4,6 +4,7 @@ import auth from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
 
+// Routes for adding question
 router.post('/:examId/questions', auth, addQuestion);
 
 export default router;

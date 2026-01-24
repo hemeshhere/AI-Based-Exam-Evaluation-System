@@ -5,7 +5,7 @@ import Submission from '../models/submission.model.js';
 import Issue from '../models/issue.model.js';
 import Todo from '../models/todo.model.js';
 
-// --- Dashboard Stats ---
+// Dashboard Stats 
 
 export const getDashboardStats = asyncHandler(async (req, res) => {
     const teacherId = req.user._id;
@@ -29,7 +29,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 
-// --- To-Do List ---
+// To-Do List 
 
 export const getTodos = asyncHandler(async (req, res) => {
     const todos = await Todo.find({ teacher: req.user._id }).sort({ createdAt: -1 });
@@ -60,7 +60,7 @@ export const deleteTodo = asyncHandler(async (req, res) => {
 });
 
 
-// --- Recent Activity ---
+// Recent Activity 
 
 export const getRecentActivity = asyncHandler(async (req, res) => {
     const teacherId = req.user._id;

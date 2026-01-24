@@ -4,14 +4,14 @@ import { createIssue, getStudentIssues, getTeacherIssues, replyToIssue } from '.
 
 const router = express.Router();
 
-// All routes in this file require a logged-in user
+// Verifies a user is logged-in
 router.use(verifyToken);
 
-// --- Student Routes ---
+// Student Routes 
 router.post('/', authorize('student'), createIssue);
 router.get('/student', authorize('student'), getStudentIssues);
 
-// --- Teacher Routes ---
+// Teacher Routes 
 router.get('/teacher', authorize('teacher'), getTeacherIssues);
 router.put('/:id/reply', authorize('teacher'), replyToIssue);
 

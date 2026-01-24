@@ -12,15 +12,20 @@ export const createExamWithQuestions = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Exam details and at least one question are required.');
     }
 
-    const newExam = await Exam.create({ ...examDetails, createdBy: req.user._id });
+    const newExam = await Exam.create({ 
+        ...examDetails, 
+        createdBy: req.user._id 
+    });
     
-    const questionDocs = questions.map(q => ({ ...q, exam: newExam._id, createdBy: req.user._id }));
+    const questionDocs = questions.map(q => ({ 
+        ...q, 
+        exam: newExam._id, 
+        createdBy: req.user._id 
+    }));
     const createdQuestions = await Question.insertMany(questionDocs);
 
-    // ✅ ADDED: Calculate the total marks by summing up marks from all questions.
     const totalMarks = questions.reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
 
-    // ✅ MODIFIED: Update the exam with the question IDs and the calculated total marks.
     newExam.questions = createdQuestions.map(q => q._id);
     newExam.totalMarks = totalMarks;
     await newExam.save();
@@ -29,22 +34,30 @@ export const createExamWithQuestions = asyncHandler(async (req, res) => {
     return new ApiResponse(res).success(201, populatedExam, 'Exam created successfully');
 });
 
-// ... (the rest of your teacherController.js file remains the same)
 export const getTeacherExams = asyncHandler(async (req, res) => {
-    const exams = await Exam.find({ createdBy: req.user._id }).select('-questions').sort({ createdAt: -1 });
+    const exams = await Exam.find({ 
+        createdBy: req.user._id 
+    }).select('-questions').sort({ createdAt: -1 });
+
     return new ApiResponse(res).success(200, exams, 'Exams fetched successfully');
 });
 
 export const getExamDetails = asyncHandler(async (req, res) => {
     const { examId } = req.params;
-    const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id }).populate('questions');
+    const exam = await Exam.findOne({ 
+        _id: examId, 
+        createdBy: req.user._id 
+    }).populate('questions');
     if (!exam) throw new ApiError(404, 'Exam not found or you are not authorized.');
     return new ApiResponse(res).success(200, exam, 'Exam details fetched successfully.');
 });
 
 export const deleteExam = asyncHandler(async (req, res) => {
     const { examId } = req.params;
-    const exam = await Exam.findOne({ _id: examId, createdBy: req.user._id });
+    const exam = await Exam.findOne({ 
+        _id: examId, 
+        createdBy: req.user._id 
+    });
     if (!exam) throw new ApiError(44, 'Exam not found or you are not authorized.');
     await Question.deleteMany({ exam: examId });
     await Exam.findByIdAndDelete(examId);
@@ -97,12 +110,18 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
 
     let prompt;
     const hasModelAnswer = question.modelAnswer && question.modelAnswer.trim() !== '';
-    const outputFormat = 'Provide your response in a strict JSON format with two keys: "marks" (a number out of ' + question.marks + ') and "feedback" (a string in markdown format explaining the evaluation).';
+    const outputFormat = 'Provide your response in a strict JSON format with two keys: "marks" (a number out of ' 
+        + question.marks + ') and "feedback" (a string in markdown format explaining the evaluation).';
 
     if (hasModelAnswer) {
-        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. Original Question: "${question.text}". Model Answer: "${question.modelAnswer}". Student's Answer: "${studentAnswerText}". Evaluate the student's answer based on the model answer. ${outputFormat}`;
-    } else {
-        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. The Question is: "${question.text}". The Student's Answer is: "${studentAnswerText}". Based on your expert knowledge, evaluate the student's answer. ${outputFormat}`;
+        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. 
+        Original Question: "${question.text}". Model Answer: "${question.modelAnswer}". 
+        Student's Answer: "${studentAnswerText}". Evaluate the student's answer based on the model answer. ${outputFormat}`;
+    } 
+    else {
+        prompt = `You are an expert examiner. The question is worth ${question.marks} marks. 
+        The Question is: "${question.text}". The Student's Answer is: "${studentAnswerText}". 
+        Based on your expert knowledge, evaluate the student's answer. ${outputFormat}`;
     }
 
     let aiResponse;
@@ -132,14 +151,13 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
         if (!response.ok) {
             const errorBody = await response.text();
             console.error("Gemini API Error Response:", errorBody);
-            // Try to parse the errorBody to see if it's the specific JSON error
             try {
                 const errorJson = JSON.parse(errorBody);
                 if (errorJson.error && errorJson.error.message) {
                     throw new ApiError(500, `Error from Gemini API: ${errorJson.error.message}`);
                 }
-            } catch (e) {
-                // If parsing fails, just use the raw text
+            } 
+            catch (e) {
                 throw new ApiError(500, `Error from Gemini API: ${response.statusText}. Response: ${errorBody}`);
             }
         }
@@ -151,9 +169,7 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
             throw new ApiError(500, "Received an invalid response structure from Gemini API. Check for safety blocks.");
         }
 
-        const rawText =
-            data.candidates?.[0]?.content?.parts?.[0]?.text ||
-            data.candidates?.[0]?.content?.parts?.[0]?.generatedText;
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || data.candidates?.[0]?.content?.parts?.[0]?.generatedText;
 
         if (!rawText) {
             throw new ApiError(500, "Gemini returned no text. Possibly safety blocked.");
@@ -163,7 +179,8 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
         try {
             const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             aiResponse = JSON.parse(jsonText);
-        } catch (parseError) {
+        } 
+        catch (parseError) {
             console.error("Failed to parse JSON from Gemini response:", parseError);
             aiResponse = {
                 marks: 0,
@@ -174,7 +191,7 @@ export const evaluateAnswerWithAI = asyncHandler(async (req, res) => {
     } catch (error) {
         console.error("Gemini API Call Error:", error);
         if (error instanceof ApiError) {
-            throw error; // Re-throw ApiError directly
+            throw error; 
         }
         throw new ApiError(500, `Failed to get a response from the AI evaluation service: ${error.message}`);
     }
@@ -218,12 +235,12 @@ export const publishResults = asyncHandler(async (req, res) => {
     return new ApiResponse(res).success(200, { modifiedCount: result.modifiedCount }, `${result.modifiedCount} result(s) published successfully.`);
 });
 
-
-// ✅ NEW FUNCTION: To create a timetable entry without questions
 export const createTimetableEntry = asyncHandler(async (req, res) => {
     const { title, description, department, year, semester, section, batch, date, startTime, endTime, durationMinutes } = req.body;
 
-    const requiredFields = ['title', 'department', 'year', 'semester', 'section', 'batch', 'date', 'startTime', 'endTime', 'durationMinutes'];
+    const requiredFields = ['title', 'department', 'year', 'semester', 'section', 
+                            'batch', 'date', 'startTime', 'endTime', 'durationMinutes'];
+
     for (const field of requiredFields) {
         if (!req.body[field]) {
             throw new ApiError(400, `${field} is required.`);
@@ -233,10 +250,9 @@ export const createTimetableEntry = asyncHandler(async (req, res) => {
     const examData = {
         ...req.body,
         createdBy: req.user._id,
-        // Ensure this entry is treated as a schedule, not a draft exam
         status: 'scheduled', 
-        questions: [], // No questions for a simple timetable entry
-        totalMarks: 0, // No marks,
+        questions: [], 
+        totalMarks: 0,
     };
 
     const newEntry = await Exam.create(examData);
