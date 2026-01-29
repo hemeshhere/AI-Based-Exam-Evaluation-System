@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Mail, Phone, MapPin, User, Hash, Award, BookOpen, Edit } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+import { getToken } from "../utils/handleToken";
 
 export default function StudentProfile() {
     const { user } = useAuth();
@@ -12,8 +14,9 @@ export default function StudentProfile() {
         return <div className="text-center p-10">Loading profile...</div>;
     }
 
+    const imgAdd="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Unknown_person.jpg/1280px-Unknown_person.jpg?20200423155822";
     // Initialize profileImage state after checking for user
-    const [profileImage, setProfileImage] = useState(user.profilePicture || `https://i.pravatar.cc/150?u=${user.email}`);
+    const [profileImage, setProfileImage] = useState(user.profilePicture || imgAdd);
 
     const handlePictureChangeClick = () => {
         fileInputRef.current.click();
@@ -21,14 +24,32 @@ export default function StudentProfile() {
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImage(reader.result);
-                // TODO: Add API call to upload image and update user profile
-            };
-            reader.readAsDataURL(file);
-        }
+        if (!file) return;
+        const reader = new FileReader();
+        const { accessToken } = getToken();
+        reader.onloadend = async () => {
+            const base64Image = reader.result;
+            setProfileImage(base64Image);
+            try {
+                const res = await axios.post(
+                    `${import.meta.env.VITE_API_BASE_URL}/api/upload-profile`,
+                    {
+                        image: base64Image,
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    }
+                );
+                // Replace with Cloudinary URL
+                setProfileImage(res.data.imageUrl);
+            } catch (error) {
+                console.error("Image upload failed", error);
+                alert("Image upload failed. Please try again.");
+            }
+        };
+        reader.readAsDataURL(file);
     };
 
     // Animation variants for Framer Motion

@@ -9,6 +9,7 @@ import studentRoutes from './src/routes/studentRoutes.js';
 import teacherRoutes from './src/routes/teacherRoutes.js';
 import issueRoutes from './src/routes/issueRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
+import uploadRoutes from './src/routes/uploadRoutes.js';
 
 // Checks req. env variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
@@ -22,7 +23,7 @@ if (missingVars.length > 0) {
 const app = express();
 
 //Middlewares
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
 // Environment status-
@@ -39,6 +40,7 @@ app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/issues', issueRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api', uploadRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

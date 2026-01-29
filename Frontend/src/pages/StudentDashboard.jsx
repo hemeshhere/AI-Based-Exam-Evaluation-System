@@ -54,7 +54,6 @@ export default function StudentDashboard() {
             <div className="px-6 py-5 border-b border-gray-200">
                 <h1 className="text-2xl font-bold text-indigo-600">Student Portal</h1>
             </div>
-            {/* ✅ EDITED: Adjusted padding and spacing for better vertical distribution */}
             <nav className="flex-grow p-4 pt-6 space-y-3">
                 {sidebarItems.map((item) => {
                     const isActive = activeTab === item.id;
@@ -74,9 +73,9 @@ export default function StudentDashboard() {
             <div className="p-4 border-t border-gray-200">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
                     <img 
-                        src={user?.profilePicture || `https://i.pravatar.cc/150?u=${user?.email}`} 
+                        src={user?.profilePicture || `https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Unknown_person.jpg/1280px-Unknown_person.jpg?20200423155822`} 
                         alt="User Avatar" 
-                        className="w-10 h-10 rounded-full" 
+                        className="w-15 h-10 rounded-full" 
                     />
                     <div className="flex-1 overflow-hidden">
                         <p className="font-semibold text-sm text-gray-800 truncate">{user?.firstName} {user?.lastName}</p>
