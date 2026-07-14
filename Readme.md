@@ -308,9 +308,7 @@ npm run lint       # Run ESLint
 - Update documentation as needed
 - Ensure all tests pass before submitting PR
 
-## 📝 License
 
-This project is licensed under the ISC License - see the LICENSE file for details.
 
 ## 👥 Team & Contributors
 
